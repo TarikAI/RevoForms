@@ -4,10 +4,6 @@
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "devCommand": "npm run dev",
-  "env": {
-    "ZHIPU_API_KEY": "@zhipu-api-key",
-    "OPENROUTER_API_KEY": "@openrouter-api-key"
-  },
   "headers": [
     {
       "source": "/(.*)",

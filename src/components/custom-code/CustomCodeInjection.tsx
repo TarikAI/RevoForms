@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Code2, Play, Save, Trash2, Copy, Check, AlertTriangle, Upload,
-  Download, FileText, Javascript, Css, Eye, EyeOff, Settings,
+  Download, FileText, FileCode, Palette, Eye, EyeOff, Settings,
   Plus, X, ChevronDown, ChevronRight, Zap, Globe, Shield, Database
 } from 'lucide-react'
 import { useFormStore } from '@/store/formStore'
@@ -312,8 +312,8 @@ document.addEventListener('mouseleave', function(e) {
 
   const getTypeIcon = (type: CodeSnippet['type']) => {
     switch (type) {
-      case 'javascript': return Javascript
-      case 'css': return Css
+      case 'javascript': return FileCode
+      case 'css': return Palette
       case 'html': return FileText
     }
   }

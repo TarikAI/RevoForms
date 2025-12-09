@@ -51,7 +51,7 @@ If you can suggest a value for a field based on context, include it in your resp
     ]
 
     let response: Response
-    let aiMessage: string
+    let aiMessage: string = ''
 
     // Try Z.ai first
     if (ZAI_API_KEY) {

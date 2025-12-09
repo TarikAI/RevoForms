@@ -55,6 +55,7 @@
     "react-quill": "^2.0.0",
     "resend": "^6.5.2",
     "sonner": "^1.7.1",
+    "stripe": "^20.0.0",
     "tailwind-merge": "^2.6.0",
     "three": "^0.171.0",
     "uuid": "^13.0.0",

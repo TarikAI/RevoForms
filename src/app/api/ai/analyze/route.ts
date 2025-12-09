@@ -13,7 +13,13 @@ export async function POST(request: NextRequest) {
     // Simulate AI analysis
     const healthScore = Math.floor(Math.random() * 30) + 70 // 70-100 score
 
-    const analysis = {
+    const analysis: {
+      healthScore: number
+      issues: Array<{ type: string; severity: string; message: string; fieldId: string | null }>
+      recommendations: Array<{ type: string; priority: string; title: string; description: string; impact: string }>
+      insights: Array<{ type: string; title: string; value: string; trend: string; description: string }>
+      fieldAnalysis: Array<{ id: string; label: string; type: string; completionRate: number; avgTimeSpent: number; dropOffRate: number }>
+    } = {
       healthScore,
       issues: [],
       recommendations: [],

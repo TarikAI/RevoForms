@@ -1,0 +1,226 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+
+export async function POST(request: NextRequest) {
+  try {
+    const { form, formData, includeValues } = await request.json()
+
+    if (!form) {
+      return NextResponse.json({ error: 'Form data is required' }, { status: 400 })
+    }
+
+    // Create PDF document
+    const pdfDoc = await PDFDocument.create()
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    
+    let page = pdfDoc.addPage([612, 792]) // Letter size
+    const { width, height } = page.getSize()
+    
+    let y = height - 50
+    const margin = 50
+    const lineHeight = 20
+    const fieldGap = 25
+
+    // Colors based on form styling
+    const colors = form.styling?.colors || {}
+    const primaryColor = hexToRgb(colors.primary || '#06b6d4')
+    const textColor = rgb(0.1, 0.1, 0.15)
+    const mutedColor = rgb(0.4, 0.4, 0.45)
+
+    // Title
+    page.drawText(form.name || 'Form', {
+      x: margin,
+      y,
+      size: 24,
+      font: boldFont,
+      color: primaryColor,
+    })
+    y -= 10
+
+    // Underline
+    page.drawLine({
+      start: { x: margin, y },
+      end: { x: width - margin, y },
+      thickness: 2,
+      color: primaryColor,
+    })
+    y -= 25
+
+    // Description
+    if (form.description) {
+      page.drawText(form.description, {
+        x: margin,
+        y,
+        size: 11,
+        font,
+        color: mutedColor,
+      })
+      y -= 25
+    }
+
+    // Submission timestamp
+    page.drawText(`Generated: ${new Date().toLocaleString()}`, {
+      x: margin,
+      y,
+      size: 9,
+      font,
+      color: mutedColor,
+    })
+    y -= 35
+
+    // Fields
+    for (const field of form.fields || []) {
+      // Check if we need a new page
+      if (y < 100) {
+        page = pdfDoc.addPage([612, 792])
+        y = height - 50
+      }
+
+      // Skip non-data fields
+      if (['divider', 'heading', 'paragraph'].includes(field.type)) {
+        if (field.type === 'heading') {
+          page.drawText(field.label || '', {
+            x: margin,
+            y,
+            size: 14,
+            font: boldFont,
+            color: textColor,
+          })
+          y -= lineHeight
+        } else if (field.type === 'paragraph') {
+          page.drawText(field.content || field.label || '', {
+            x: margin,
+            y,
+            size: 10,
+            font,
+            color: mutedColor,
+          })
+          y -= lineHeight
+        } else {
+          // Divider
+          page.drawLine({
+            start: { x: margin, y: y + 5 },
+            end: { x: width - margin, y: y + 5 },
+            thickness: 0.5,
+            color: mutedColor,
+          })
+          y -= 15
+        }
+        continue
+      }
+
+      // Field label
+      const labelText = `${field.label}${field.required ? ' *' : ''}`
+      page.drawText(labelText, {
+        x: margin,
+        y,
+        size: 11,
+        font: boldFont,
+        color: textColor,
+      })
+      y -= lineHeight
+
+      // Field value
+      if (includeValues && formData) {
+        let value = formData[field.id]
+        
+        if (Array.isArray(value)) {
+          value = value.join(', ')
+        } else if (value === undefined || value === null || value === '') {
+          value = '(Not filled)'
+        } else {
+          value = String(value)
+        }
+
+        // Handle long text by wrapping
+        const maxWidth = width - (margin * 2) - 20
+        const words = value.split(' ')
+        let line = ''
+        
+        for (const word of words) {
+          const testLine = line + (line ? ' ' : '') + word
+          const textWidth = font.widthOfTextAtSize(testLine, 10)
+          
+          if (textWidth > maxWidth && line) {
+            page.drawText(line, {
+              x: margin + 10,
+              y,
+              size: 10,
+              font,
+              color: value === '(Not filled)' ? mutedColor : textColor,
+            })
+            y -= lineHeight - 5
+            line = word
+            
+            if (y < 100) {
+              page = pdfDoc.addPage([612, 792])
+              y = height - 50
+            }
+          } else {
+            line = testLine
+          }
+        }
+        
+        if (line) {
+          page.drawText(line, {
+            x: margin + 10,
+            y,
+            size: 10,
+            font,
+            color: value === '(Not filled)' ? mutedColor : textColor,
+          })
+          y -= lineHeight
+        }
+      } else {
+        // Empty line for manual filling
+        page.drawLine({
+          start: { x: margin + 10, y: y + 3 },
+          end: { x: width - margin, y: y + 3 },
+          thickness: 0.5,
+          color: mutedColor,
+        })
+        y -= lineHeight
+      }
+
+      y -= 5 // Extra gap between fields
+    }
+
+    // Footer
+    const footerY = 30
+    page.drawText(`Generated by RevoForms`, {
+      x: margin,
+      y: footerY,
+      size: 8,
+      font,
+      color: mutedColor,
+    })
+
+    // Generate PDF bytes
+    const pdfBytes = await pdfDoc.save()
+    
+    return new NextResponse(Buffer.from(pdfBytes), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${(form.name || 'form').replace(/\s+/g, '_')}_filled.pdf"`,
+      },
+    })
+
+  } catch (error: any) {
+    console.error('PDF export error:', error)
+    return NextResponse.json({ error: 'Failed to generate PDF', details: error.message }, { status: 500 })
+  }
+}
+
+// Helper function to convert hex to RGB
+function hexToRgb(hex: string) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  if (result) {
+    return rgb(
+      parseInt(result[1], 16) / 255,
+      parseInt(result[2], 16) / 255,
+      parseInt(result[3], 16) / 255
+    )
+  }
+  return rgb(0.02, 0.71, 0.83) // Default cyan
+}

@@ -191,7 +191,9 @@ async function uploadToGCS(file: File, folder: string): Promise<{ url: string; i
   const key = `${folder}/${fileName}`
 
   const fileUpload = bucket.file(key)
-  await fileUpload.save(file.buffer, {
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+  await fileUpload.save(buffer, {
     metadata: {
       contentType: file.type,
     },
@@ -217,6 +219,9 @@ async function uploadToCloudinary(file: File, folder: string): Promise<{ url: st
     api_secret: process.env.CLOUDINARY_API_SECRET,
   })
 
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+
   const result = await new Promise((resolve, reject) => {
     cloudinary.uploader.upload_stream(
       {
@@ -227,7 +232,7 @@ async function uploadToCloudinary(file: File, folder: string): Promise<{ url: st
         if (error) reject(error)
         else resolve(result)
       }
-    ).end(file.buffer)
+    ).end(buffer)
   })
 
   const cloudinaryResult = result as any

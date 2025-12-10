@@ -10,7 +10,12 @@ export async function POST(request: NextRequest) {
 
     const { formId, optimizationType, targetMetric } = await request.json()
 
-    const optimizations = {
+    const optimizations: {
+      applied: Array<{ type: string; description: string; expectedImprovement: string }>
+      predictedImpact: Record<string, string>
+      abTest: { name: string; variants: Array<{ name: string; traffic: number; description: string; changes?: string[] }>; duration: string; primaryMetric: string; significanceLevel: number } | null
+      rolloutPlan: Array<{ phase: string; duration: string; tasks: string[] }>
+    } = {
       applied: [],
       predictedImpact: {},
       abTest: null,

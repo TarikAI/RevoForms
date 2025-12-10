@@ -10,7 +10,12 @@ export async function POST(request: NextRequest) {
 
     const { context, fieldType, currentLabel, formData } = await request.json()
 
-    const suggestions = {
+    const suggestions: {
+      fieldLabels: string[]
+      conditionalLogic: Array<{ trigger: string; condition: string; action: string; reason: string }>
+      optimizations: Array<{ type: string; title: string; description: string; impact: string }>
+      contentImprovements: Array<{ field: string; suggestion: string; example: string; reason: string }>
+    } = {
       fieldLabels: [],
       conditionalLogic: [],
       optimizations: [],

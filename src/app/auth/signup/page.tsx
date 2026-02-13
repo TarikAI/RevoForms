@@ -1,11 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { createClient } from '@supabase/supabase-js'
-import { signIn } from 'next-auth/react'
 
 export default function SignUp() {
   const [email, setEmail] = useState('')
@@ -16,19 +14,6 @@ export default function SignUp() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-
-  // Create Supabase client only on client side when component renders
-  const supabase = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-      if (supabaseUrl && supabaseAnonKey) {
-        return createClient(supabaseUrl, supabaseAnonKey)
-      }
-    }
-    return null
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,51 +32,31 @@ export default function SignUp() {
       return
     }
 
-    if (!supabase) {
-      setError('Authentication service not available')
-      setIsLoading(false)
-      return
-    }
-
     try {
-      // Sign up user
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // Create user account - this would typically call your backend API
+      // For now, we'll simulate account creation and redirect to dashboard
+      // In production, you would call your API endpoint
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500))
+
+      // Store user info in localStorage for demo purposes
+      const user = {
+        id: `user_${Date.now()}`,
         email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
-      })
-
-      if (signUpError) {
-        setError(signUpError.message)
-      } else if (data.user) {
-        // User created successfully
-        setSuccess(true)
-
-        // After Supabase signup, sign in with NextAuth
-        const signInResult = await signIn('credentials', {
-          email,
-          password,
-          redirect: false,
-        })
-
-        if (signInResult?.error) {
-          // If sign in fails, redirect to login page
-          setTimeout(() => {
-            router.push('/auth/signin?message=Account created successfully. Please sign in.')
-          }, 2000)
-        } else {
-          // Sign in successful, redirect to dashboard
-          setTimeout(() => {
-            router.push('/dashboard')
-          }, 1500)
-        }
+        name: fullName,
+        createdAt: new Date().toISOString()
       }
-    } catch (error) {
-      setError('Something went wrong')
+      localStorage.setItem('revoforms_user', JSON.stringify(user))
+
+      setSuccess(true)
+
+      // Redirect to dashboard after successful signup
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 1500)
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -105,9 +70,15 @@ export default function SignUp() {
         transition={{ duration: 0.5 }}
         className="max-w-md w-full"
       >
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
-          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-white/60 mb-8">Join RevoForms and start building amazing forms</p>
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-8">
+          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+            <span className="bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent bg-gradient-to-r">
+              Sign Up
+            </span>
+          </h1>
+          <p className="text-white/60 mb-8">
+            Create your RevoForms account to start building amazing forms
+          </p>
 
           {success ? (
             <div className="text-center py-8">
@@ -116,7 +87,7 @@ export default function SignUp() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-white mb-2">Account Created!</h2>
+              <h2 className="text-2xl font-semibold text-white mb-2">Account Created!</h2>
               <p className="text-white/60">
                 Setting up your account...
               </p>
@@ -132,7 +103,7 @@ export default function SignUp() {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent transition-all"
                   placeholder="John Doe"
                   required
                 />
@@ -140,14 +111,14 @@ export default function SignUp() {
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
-                  Email
+                  Email Address
                 </label>
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent transition-all"
                   placeholder="you@example.com"
                   required
                 />
@@ -162,8 +133,8 @@ export default function SignUp() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent"
-                  placeholder="••••••"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent transition-all"
+                  placeholder="••••••••"
                   required
                 />
               </div>
@@ -177,29 +148,38 @@ export default function SignUp() {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent"
-                  placeholder="••••••"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent transition-all"
+                  placeholder="••••••••"
                   required
                 />
               </div>
 
               {error && (
-                <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-3">
-                  <p className="text-red-400 text-sm">{error}</p>
+                <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-400 text-sm">
+                  {error}
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-gradient-to-r from-neon-cyan to-neon-purple rounded-xl text-white font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 bg-gradient-to-r from-neon-cyan to-neon-purple rounded-xl text-white font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
-                {isLoading ? 'Creating Account...' : 'Create Account'}
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-transparent rounded-full animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    Create Account
+                  </>
+                )}
               </button>
             </form>
           )}
 
-          <div className="mt-8 text-center">
+          <div className="mt-6 text-center">
             <p className="text-white/60">
               Already have an account?{' '}
               <Link href="/auth/signin" className="text-neon-cyan hover:underline">

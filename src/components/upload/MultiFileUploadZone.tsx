@@ -2,11 +2,12 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Upload, FileText, Image, X, Loader2, CheckCircle, 
+import {
+  Upload, FileText, Image, X, Loader2, CheckCircle,
   AlertCircle, FileUp, Wand2, Edit3, Download
 } from 'lucide-react'
 import type { ProcessingMode } from '@/types/upload'
+import { toast } from 'sonner'
 
 // Unified result interface
 export interface UploadResult {
@@ -26,6 +27,21 @@ export interface UploadResult {
   filledImage?: ArrayBuffer
   // Analysis data
   detectedFields?: any[]
+  // For multiple files
+  batchResults?: BatchFileResult[]
+  summary?: {
+    total: number
+    success: number
+    failed: number
+  }
+}
+
+interface BatchFileResult {
+  filename: string
+  success: boolean
+  formStructure?: any
+  error?: string
+  provider?: string
 }
 
 interface UploadZoneProps {
@@ -46,18 +62,21 @@ interface UploadedFile {
   type: 'pdf' | 'image' | 'other'
 }
 
-export function UploadZone({ 
-  onUploadComplete, 
-  onFormCreated, 
-  onFilledPdf, 
-  onEditedImage, 
-  compact 
+export function UploadZone({
+  onUploadComplete,
+  onFormCreated,
+  onFilledPdf,
+  onEditedImage,
+  compact,
+  allowMultiple = false,
+  batchMode = 'separate'
 }: UploadZoneProps) {
   const [state, setState] = useState<UploadState>('idle')
-  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
-  const [processingMode, setProcessingMode] = useState<ProcessingMode>('recreate')
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [processingMode, setProcessingMode] = useState<ProcessingMode>('create')
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<any>(null)
+  const [results, setResults] = useState<any[]>([])
   const [userPrompt, setUserPrompt] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -78,18 +97,30 @@ export function UploadZone({
     e.stopPropagation()
     setState('idle')
     const files = Array.from(e.dataTransfer.files)
-    if (files.length > 0) handleFile(files[0])
-  }, [])
+    if (files.length > 0) {
+      if (allowMultiple) {
+        files.forEach((f) => handleFile(f))
+      } else {
+        handleFile(files[0])
+      }
+    }
+  }, [allowMultiple])
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files && files.length > 0) handleFile(files[0])
-  }, [])
+    if (files && files.length > 0) {
+      if (allowMultiple) {
+        Array.from(files).forEach((f) => handleFile(f))
+      } else {
+        handleFile(files[0])
+      }
+    }
+  }, [allowMultiple])
 
   const handleFile = async (file: File) => {
-    const type = file.type === 'application/pdf' ? 'pdf' 
+    const type = file.type === 'application/pdf' ? 'pdf'
       : file.type.startsWith('image/') ? 'image' : 'other'
-    
+
     let preview: string | undefined
     if (type === 'image') {
       preview = await new Promise<string>((resolve) => {
@@ -99,28 +130,40 @@ export function UploadZone({
       })
     }
 
-    setUploadedFile({ file, preview, type })
+    setUploadedFiles((prev) => [...prev, { file, preview, type }])
     setError(null)
     setResult(null)
   }
 
-  const processFile = async () => {
-    if (!uploadedFile) return
+  const processFiles = async () => {
+    if (uploadedFiles.length === 0) return
 
     setState('uploading')
     setError(null)
 
     try {
       const formData = new FormData()
-      formData.append('file', uploadedFile.file)
-      formData.append('mode', processingMode)
+
+      if (allowMultiple && uploadedFiles.length > 1) {
+        // Batch upload
+        uploadedFiles.forEach((f) => {
+          formData.append('files', f.file)
+        })
+        formData.append('mode', processingMode)
+        formData.append('batchMode', batchMode)
+      } else {
+        // Single file upload
+        formData.append('file', uploadedFiles[0].file)
+        formData.append('mode', processingMode)
+      }
+
       if (userPrompt.trim()) {
         formData.append('prompt', userPrompt.trim())
       }
 
       setState('processing')
 
-      const response = await fetch('/api/upload/process', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData
       })
@@ -138,30 +181,30 @@ export function UploadZone({
       const uploadResult: UploadResult = {
         success: true,
         mode: processingMode,
-        formStructure: data.generatedForm ? {
-          name: data.generatedForm.name || data.analysis?.title || 'Imported Form',
-          description: data.generatedForm.description || '',
-          fields: data.generatedForm.fields || [],
-          settings: data.generatedForm.settings,
-          styling: data.generatedForm.styling
-        } : undefined,
-        filledPDF: data.filledPdf,
-        filledImage: data.editedImage,
-        detectedFields: data.analysis?.fields
+        formStructure: data.formStructure,
+        filledPDF: data.filledPDF,
+        filledImage: data.filledImage,
+        detectedFields: data.detectedFields,
+        batchResults: data.batchResults,
+        summary: data.summary
       }
 
       // Call unified callback
-      onUploadComplete?.(uploadResult)
+      if (allowMultiple && data.batchResults) {
+        onUploadComplete?.(data.batchResults)
+      } else {
+        onUploadComplete?.(uploadResult)
+      }
 
       // Call specific callbacks
-      if (data.generatedForm && onFormCreated) {
-        onFormCreated(data.generatedForm)
+      if (data.formStructure && onFormCreated) {
+        onFormCreated(data.formStructure)
       }
-      if (data.filledPdf && onFilledPdf) {
-        onFilledPdf(data.filledPdf, `filled_${uploadedFile.file.name}`)
+      if (data.filledPDF && onFilledPdf) {
+        onFilledPdf(data.filledPDF, `filled_${uploadedFiles[0].file.name}`)
       }
-      if (data.editedImage && onEditedImage) {
-        onEditedImage(data.editedImage, `edited_${uploadedFile.file.name}`)
+      if (data.filledImage && onEditedImage) {
+        onEditedImage(data.filledImage, `edited_${uploadedFiles[0].file.name}`)
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Upload failed'
@@ -172,16 +215,17 @@ export function UploadZone({
   }
 
   const reset = () => {
-    setUploadedFile(null)
+    setUploadedFiles([])
     setState('idle')
     setError(null)
     setResult(null)
+    setResults([])
     setUserPrompt('')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const modeOptions = [
-    { id: 'recreate', label: 'Create Editable Form', icon: Wand2, desc: 'Convert to RevoForm' },
+    { id: 'create', label: 'Create Editable Form', icon: Wand2, desc: 'Convert to RevoForm' },
     { id: 'fill', label: 'Fill Form', icon: Edit3, desc: 'Fill and download' },
     { id: 'edit-image', label: 'Edit with Handwriting', icon: Image, desc: 'Add handwriting/signatures' },
   ]
@@ -194,6 +238,7 @@ export function UploadZone({
           ref={fileInputRef}
           type="file"
           accept=".pdf,image/*"
+          multiple={allowMultiple}
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -214,12 +259,13 @@ export function UploadZone({
         ref={fileInputRef}
         type="file"
         accept=".pdf,image/*"
+        multiple={allowMultiple}
         onChange={handleFileSelect}
         className="hidden"
       />
 
       {/* Drop Zone */}
-      {!uploadedFile && (
+      {uploadedFiles.length === 0 && (
         <motion.div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -231,7 +277,7 @@ export function UploadZone({
               : 'border-white/20 hover:border-white/40 hover:bg-white/5'
           }`}
         >
-          <Upload className={`w-8 h-8 mx-auto mb-3 ${state === 'dragging' ? 'text-neon-cyan' : 'text-white/50'}`} />
+          <Upload className={`w-10 h-10 mx-auto mb-3 ${state === 'dragging' ? 'text-neon-cyan' : 'text-white/50'}`} />
           <p className="text-sm text-white/70 mb-1">
             Drop your form here or <span className="text-neon-cyan">browse</span>
           </p>
@@ -239,38 +285,72 @@ export function UploadZone({
         </motion.div>
       )}
 
-      {/* File Preview */}
-      {uploadedFile && state !== 'success' && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/5 border border-white/10 rounded-xl p-4"
-        >
-          <div className="flex items-start gap-3">
+      {/* File Previews */}
+      <AnimatePresence>
+        {uploadedFiles.map((uploadedFile, index) => (
+          <motion.div
+            key={uploadedFile.file.name + index}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-start gap-3"
+          >
+            <button
+              onClick={() => {
+                setUploadedFiles((prev) => prev.filter((f) => f.file !== uploadedFile.file))
+              }}
+              className="p-1 hover:bg-white/10 rounded"
+            >
+              <X className="w-4 h-4 text-white/50" />
+            </button>
+
             {uploadedFile.preview ? (
-              <img src={uploadedFile.preview} alt="Preview" className="w-16 h-16 object-cover rounded-lg" />
+              <img src={uploadedFile.preview} alt="Preview" className="w-12 h-12 object-cover rounded-lg" />
             ) : (
-              <div className="w-16 h-16 bg-red-500/20 rounded-lg flex items-center justify-center">
-                <FileText className="w-8 h-8 text-red-400" />
+              <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+                <FileText className="w-6 h-6 text-red-400" />
               </div>
             )}
+
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white font-medium truncate">{uploadedFile.file.name}</p>
               <p className="text-xs text-white/50">{(uploadedFile.file.size / 1024).toFixed(1)} KB</p>
             </div>
-            <button onClick={reset} className="p-1 hover:bg-white/10 rounded">
-              <X className="w-4 h-4 text-white/50" />
-            </button>
-          </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
-          {/* Mode Selection */}
-          <div className="mt-4 space-y-2">
-            <p className="text-xs text-white/50 mb-2">What would you like to do?</p>
-            {modeOptions.map(option => (
+      {/* Mode Selection & Process Button */}
+      {uploadedFiles.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-3"
+        >
+          {/* Batch Mode Selection for multiple files */}
+          {allowMultiple && uploadedFiles.length > 1 && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {}}
+                className="flex-1 py-2 bg-neon-cyan/20 border border-neon-cyan/30 rounded-lg text-neon-cyan text-sm"
+              >
+                Separate Forms
+              </button>
+              <button
+                onClick={() => {}}
+                className="flex-1 py-2 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-400 text-sm"
+              >
+                Combined Form
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-2 flex-wrap">
+            {modeOptions.map((option) => (
               <button
                 key={option.id}
                 onClick={() => setProcessingMode(option.id as ProcessingMode)}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-left ${
                   processingMode === option.id
                     ? 'bg-neon-cyan/20 border border-neon-cyan/30'
                     : 'bg-white/5 border border-white/10 hover:bg-white/10'
@@ -286,12 +366,12 @@ export function UploadZone({
           </div>
 
           {/* AI Prompt Input */}
-          <div className="mt-4">
+          <div>
             <label className="text-xs text-white/50 mb-2 block">Add instructions for AI (optional)</label>
             <textarea
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
-              placeholder="E.g., 'Make it a job application form with modern styling' or 'Extract all fields and add validation'"
+              placeholder="e.g., 'Make it a job application form with modern styling' or 'Extract all fields and add validation'"
               className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 focus:outline-none focus:border-neon-cyan/50 resize-none"
               rows={2}
             />
@@ -299,19 +379,19 @@ export function UploadZone({
 
           {/* Process Button */}
           <button
-            onClick={processFile}
+            onClick={processFiles}
             disabled={state === 'uploading' || state === 'processing'}
-            className="w-full mt-4 py-3 bg-gradient-to-r from-neon-cyan to-neon-purple text-white font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-gradient-to-r from-neon-cyan to-neon-purple text-white font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {(state === 'uploading' || state === 'processing') ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {state === 'uploading' ? 'Uploading...' : 'Processing...'}
+                Processing...
               </>
             ) : (
               <>
                 <Wand2 className="w-4 h-4" />
-                Process Form
+                Process Form{uploadedFiles.length > 1 ? 's' : ''}
               </>
             )}
           </button>
@@ -344,51 +424,48 @@ export function UploadZone({
         >
           <div className="flex items-center gap-3 mb-3">
             <CheckCircle className="w-6 h-6 text-green-400" />
-            <p className="text-sm text-green-400 font-medium">Form processed successfully!</p>
+            <p className="text-sm text-green-400 font-medium">
+              {allowMultiple && uploadedFiles.length > 1
+                ? `${result.summary?.success || uploadedFiles.length} forms processed successfully!`
+                : 'Form processed successfully!'}
+            </p>
           </div>
-          
-          {result.analysis && (
-            <div className="text-xs text-white/60 mb-3">
-              <p>Detected {result.analysis.fields?.length || 0} fields</p>
-              {result.analysis.title && <p>Title: {result.analysis.title}</p>}
-            </div>
-          )}
 
-          <div className="flex gap-2">
-            {result.generatedForm && (
+          <div className="flex gap-2 flex-wrap">
+            {result.formStructure && (
               <button
-                onClick={() => onFormCreated?.(result.generatedForm)}
-                className="flex-1 py-2 bg-neon-cyan/20 text-neon-cyan text-sm rounded-lg hover:bg-neon-cyan/30"
+                onClick={() => onFormCreated?.(result.formStructure)}
+                className="py-2 bg-neon-cyan/20 text-neon-cyan text-sm rounded-lg hover:bg-neon-cyan/30"
               >
                 Add to Canvas
               </button>
             )}
-            {result.filledPdf && (
+            {result.filledPDF && (
               <button
                 onClick={() => {
-                  const blob = new Blob([result.filledPdf], { type: 'application/pdf' })
+                  const blob = new Blob([result.filledPDF], { type: 'application/pdf' })
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement('a')
                   a.href = url
-                  a.download = `filled_${uploadedFile?.file.name || 'form.pdf'}`
+                  a.download = `filled_${uploadedFiles[0]?.file.name || 'form.pdf'}`
                   a.click()
                 }}
-                className="flex-1 py-2 bg-neon-purple/20 text-neon-purple text-sm rounded-lg hover:bg-neon-purple/30 flex items-center justify-center gap-1"
+                className="py-2 bg-neon-purple/20 text-neon-purple text-sm rounded-lg hover:bg-neon-purple/30 flex items-center gap-1"
               >
                 <Download className="w-4 h-4" /> Download PDF
               </button>
             )}
-            {result.editedImage && (
+            {result.filledImage && (
               <button
                 onClick={() => {
-                  const blob = new Blob([result.editedImage], { type: 'image/png' })
+                  const blob = new Blob([result.filledImage], { type: 'image/png' })
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement('a')
                   a.href = url
-                  a.download = `edited_${uploadedFile?.file.name || 'form.png'}`
+                  a.download = `edited_${uploadedFiles[0]?.file.name || 'form.png'}`
                   a.click()
                 }}
-                className="flex-1 py-2 bg-neon-purple/20 text-neon-purple text-sm rounded-lg hover:bg-neon-purple/30 flex items-center justify-center gap-1"
+                className="py-2 bg-neon-purple/20 text-neon-purple text-sm rounded-lg hover:bg-neon-purple/30 flex items-center gap-1"
               >
                 <Download className="w-4 h-4" /> Download Image
               </button>

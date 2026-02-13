@@ -14,6 +14,7 @@ import { useChatStore } from '@/store/chatStore'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
+import { MultiFileUploadZone } from '@/components/upload/MultiFileUploadZone'
 
 function FormExport() {
   const exportFormId = useFormStore((state) => state.exportFormId)
@@ -47,6 +48,8 @@ function FormPreviewWrapper() {
 
 export default function Home() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true)
+  const [showMultiUpload, setShowMultiUpload] = useState(false)
+  const [showMultiUpload, setShowMultiUpload] = useState(false)
 
   const propertiesPanelOpen = useFormStore((state) => state.propertiesPanelOpen)
   const togglePropertiesPanel = useFormStore((state) => state.togglePropertiesPanel)
@@ -96,6 +99,22 @@ export default function Home() {
       
       {/* Version Badge */}
       <VersionBadge />
+
+      {/* Multi-File Upload Modal */}
+      <MultiFileUploadZone
+        isOpen={showMultiUpload}
+        onClose={() => setShowMultiUpload(false)}
+        onFormCreated={(formData) => {
+          // Import form to store
+          const { addForm } = require('@/store/formStore').default.getState() as any
+          addForm(formData)
+          // Focus on the newly created form
+          if (formData.id) {
+            const { selectForm } = require('@/store/formStore').default.getState() as any
+            selectForm(formData.id)
+          }
+        }}
+      />
     </div>
   )
 }

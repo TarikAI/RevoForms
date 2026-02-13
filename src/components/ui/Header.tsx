@@ -8,6 +8,7 @@ import { useProfileStore, getProfileCompleteness } from '@/store/profileStore'
 import { TemplatesModal } from '@/components/templates/TemplatesModal'
 import { IntegrationsModal } from '@/components/integrations/IntegrationsModal'
 import { ShareModal } from '@/components/share/ShareModal'
+import { MultiFileUploadZone } from '@/components/upload/MultiFileUploadZone'
 import { signIn, signOut, useSession } from 'next-auth/react'
 
 export function Header() {
@@ -18,6 +19,7 @@ export function Header() {
   const [showIntegrationsModal, setShowIntegrationsModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [shareFormId, setShareFormId] = useState<string | null>(null)
+  const [showMultiFileUpload, setShowMultiFileUpload] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showToolsMenu, setShowToolsMenu] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -268,11 +270,17 @@ export function Header() {
                   >
                     <LayoutTemplate className="w-4 h-4" /> Templates
                   </button>
-                  <button 
+                  <button
                     onClick={handleNewProject}
                     className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-r from-neon-cyan to-neon-purple hover:opacity-90 rounded-lg text-sm text-white font-semibold transition-all shadow-lg shadow-neon-cyan/20"
                   >
                     <Plus className="w-4 h-4" /> New Form
+                  </button>
+                  <button
+                    onClick={() => { setShowMultiFileUpload(true); setShowFormsMenu(false) }}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-white/80 hover:text-white font-medium transition-all"
+                  >
+                    <FolderPlus className="w-4 h-4" /> Upload Forms
                   </button>
                 </div>
               </div>
@@ -553,12 +561,22 @@ export function Header() {
       
       {/* Share Modal */}
       {shareFormId && (
-        <ShareModal 
-          form={forms.find(f => f.id === shareFormId)!} 
-          isOpen={showShareModal} 
-          onClose={() => { setShowShareModal(false); setShareFormId(null) }} 
+        <ShareModal
+          form={forms.find(f => f.id === shareFormId)!}
+          isOpen={showShareModal}
+          onClose={() => { setShowShareModal(false); setShareFormId(null) }}
         />
       )}
+
+      {/* Multi-File Upload Modal */}
+      <MultiFileUploadZone
+        isOpen={showMultiFileUpload}
+        onClose={() => setShowMultiFileUpload(false)}
+        onFormCreated={(formData) => {
+          const formStore = require('@/store/formStore').default.getState() as any
+          formStore.addForm(formData)
+        }}
+      />
     </header>
   )
 }

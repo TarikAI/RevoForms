@@ -1,16 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@supabase/supabase-js'
 import { signIn } from 'next-auth/react'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export default function SignUp() {
   const [email, setEmail] = useState('')
@@ -21,6 +16,19 @@ export default function SignUp() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+
+  // Create Supabase client only on client side when component renders
+  const supabase = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+      if (supabaseUrl && supabaseAnonKey) {
+        return createClient(supabaseUrl, supabaseAnonKey)
+      }
+    }
+    return null
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,8 +47,14 @@ export default function SignUp() {
       return
     }
 
+    if (!supabase) {
+      setError('Authentication service not available')
+      setIsLoading(false)
+      return
+    }
+
     try {
-      // Sign up the user
+      // Sign up user
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -149,7 +163,7 @@ export default function SignUp() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent"
-                  placeholder="••••••••"
+                  placeholder="••••••"
                   required
                 />
               </div>
@@ -164,7 +178,7 @@ export default function SignUp() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:border-transparent"
-                  placeholder="••••••••"
+                  placeholder="••••••"
                   required
                 />
               </div>

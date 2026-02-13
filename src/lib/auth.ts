@@ -3,18 +3,18 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { createClient } from '@supabase/supabase-js'
 
 // Check if Supabase credentials are properly configured
-const isSupabaseConfigured = 
+const isSupabaseConfigured =
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
   process.env.SUPABASE_SERVICE_ROLE_KEY &&
   !process.env.SUPABASE_SERVICE_ROLE_KEY.includes('your-') &&
   process.env.SUPABASE_SERVICE_ROLE_KEY.length > 20
 
 // Only create Supabase client if properly configured
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
 const supabase = isSupabaseConfigured
-  ? createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+  ? createClient(supabaseUrl, supabaseServiceKey)
   : null
 
 export const {

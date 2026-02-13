@@ -3,20 +3,36 @@ import { createBrowserClient, createServerClient as createSSRClient } from '@sup
 import type { Database } from '@/types/database'
 import { cookies } from 'next/headers'
 
+// Get environment variables safely
+const getSupabaseUrl = () => process.env.NEXT_PUBLIC_SUPABASE_URL
+const getSupabaseAnonKey = () => process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const getSupabaseServiceRoleKey = () => process.env.SUPABASE_SERVICE_ROLE_KEY
+
 // Browser client
-export const createBrowserSupabase = () =>
-  createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+export const createBrowserSupabase = () => {
+  const url = getSupabaseUrl()
+  const key = getSupabaseAnonKey()
+
+  if (!url || !key) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set')
+  }
+
+  return createBrowserClient<Database>(url, key)
+}
 
 // Server client (for Server Components, Route Handlers, Server Actions)
 export const createServerSupabase = async () => {
   const cookieStore = await cookies()
+  const url = getSupabaseUrl()
+  const key = getSupabaseAnonKey()
+
+  if (!url || !key) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set')
+  }
 
   return createSSRClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    key,
     {
       cookies: {
         getAll() {
@@ -37,10 +53,17 @@ export const createServerSupabase = async () => {
 }
 
 // Admin client (bypasses RLS - use carefully)
-export const createAdminSupabase = () =>
-  createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+export const createAdminSupabase = () => {
+  const url = getSupabaseUrl()
+  const key = getSupabaseServiceRoleKey()
+
+  if (!url || !key) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set')
+  }
+
+  return createClient<Database>(
+    url,
+    key,
     {
       auth: {
         persistSession: false,
@@ -48,11 +71,24 @@ export const createAdminSupabase = () =>
       },
     }
   )
+}
 
-// Legacy export for backward compatibility
-export const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Legacy export for backward compatibility - lazy initialization
+let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null
+
+export const supabase = () => {
+  if (!supabaseInstance) {
+    const url = getSupabaseUrl()
+    const key = getSupabaseAnonKey()
+
+    if (!url || !key) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set')
+    }
+
+    supabaseInstance = createClient<Database>(url, key)
+  }
+
+  return supabaseInstance
+}
 
 export default supabase

@@ -11,6 +11,9 @@ export {
   createAnthropicProvider,
 } from './ai-provider'
 
+// Toast utility
+export { toast } from 'sonner'
+
 // Image Editing Providers (NanoBanana)
 export {
   type ImageEditCapability,

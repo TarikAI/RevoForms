@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-})
+// Helper function to get Stripe client lazily
+function getStripeClient() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+    apiVersion: '2023-10-16' as any,
+  })
+}
 
 export async function POST(request: NextRequest) {
+  const stripe = getStripeClient()
   try {
     const { amount, currency = 'usd', paymentType, formId, customerEmail, metadata } = await request.json()
 
@@ -102,6 +106,9 @@ export async function POST(request: NextRequest) {
 
 // Webhook handler for Stripe events
 export async function PUT(request: NextRequest) {
+  // Lazy initialize Stripe client
+  const stripe = getStripeClient()
+
   try {
     const body = await request.text()
     const sig = request.headers.get('stripe-signature')
@@ -177,6 +184,9 @@ export async function PUT(request: NextRequest) {
 
 // Get payment status
 export async function GET(request: NextRequest) {
+  // Lazy initialize Stripe client
+  const stripe = getStripeClient()
+
   const { searchParams } = new URL(request.url)
   const paymentIntentId = searchParams.get('payment_intent_id')
 
@@ -209,6 +219,9 @@ export async function GET(request: NextRequest) {
 
 // Refund a payment
 export async function DELETE(request: NextRequest) {
+  // Lazy initialize Stripe client
+  const stripe = getStripeClient()
+
   try {
     const { paymentIntentId, reason, amount } = await request.json()
 

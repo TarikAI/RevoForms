@@ -100,8 +100,8 @@ export function AddressAutocompleteField({ field, value = {}, onChange, error, d
       ...addressData,
       formatted: place.formatted_address,
       placeId: place.place_id,
-      lat: place.geometry?.location.lat(),
-      lng: place.geometry?.location.lng()
+      lat: (place.geometry?.location as any)?.lat?.() || place.geometry?.location?.lat,
+      lng: (place.geometry?.location as any)?.lng?.() || place.geometry?.location?.lng
     }
 
     onChange?.(finalValue)
@@ -323,11 +323,11 @@ export function AddressAutocompleteField({ field, value = {}, onChange, error, d
               key={type}
               type="button"
               className={`flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                value?.addressType === type
+                (value as any)?.addressType === type
                   ? 'bg-neon-cyan/20 text-neon-cyan'
                   : 'bg-white/10 text-white/60 hover:bg-white/20'
               }`}
-              onClick={() => onChange?.({ ...value, addressType: type })}
+              onClick={() => onChange?.({ ...value, addressType: type } as any)}
             >
               <Icon className="w-3 h-3" />
               {label}

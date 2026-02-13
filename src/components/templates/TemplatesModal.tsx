@@ -17,6 +17,10 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
   const { addForm } = useFormStore()
   const categories = getTemplateCategories()
 
+  const getCategoryIcon = (category: FormTemplate['category']) => {
+    return categories.find(c => c.id === category)?.icon || '📄'
+  }
+
   const filteredTemplates = formTemplates.filter(template => {
     const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           template.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -34,8 +38,32 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
       name: template.name,
       description: template.description,
       fields: fieldsWithIds,
-      settings: { ...template.settings, collectEmails: true },
-      styling: template.styling as any,
+      settings: {
+        submitButtonText: template.settings?.submitText || 'Submit',
+        successMessage: template.settings?.successMessage || 'Thank you!',
+        collectEmails: true
+      },
+      styling: {
+        theme: 'modern-dark',
+        colors: {
+          primary: '#06b6d4',
+          secondary: '#8b5cf6',
+          background: '#0f0f1a',
+          surface: '#1a1a2e',
+          text: '#ffffff',
+          textMuted: '#a0a0a0',
+          border: '#333333',
+          error: '#ef4444',
+          success: '#22c55e',
+          accent: '#06b6d4'
+        },
+        fontFamily: 'Inter',
+        fontSize: { label: '14px', input: '14px', button: '14px', heading: '18px' },
+        spacing: { fieldGap: '16px', padding: '20px' },
+        borderRadius: { input: '8px', button: '8px', form: '12px' },
+        shadows: true,
+        animation: true
+      },
       size: { width: 420, height: 500 },
       position: { x: 0, y: 0 } // Let the store calculate the correct position
     })
@@ -85,7 +113,7 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
                 All Templates
               </button>
               {categories.map((cat) => (
-                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
+                <button key={cat.id} onClick={() => setSelectedCategory(cat.id as FormTemplate['category'] | 'all')}
                   className={`px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-1.5 ${selectedCategory === cat.id ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30' : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'}`}>
                   <span>{cat.icon}</span>{cat.label}
                 </button>
@@ -101,7 +129,7 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   className="text-left p-4 bg-white/5 border border-white/10 rounded-xl hover:border-neon-cyan/30 hover:bg-white/10 transition-all group">
                   <div className="flex items-start gap-3 mb-3">
-                    <span className="text-2xl">{template.icon}</span>
+                    <span className="text-2xl">{getCategoryIcon(template.category)}</span>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-white group-hover:text-neon-cyan transition-colors truncate">{template.name}</h3>
                       <p className="text-xs text-white/50 line-clamp-2 mt-0.5">{template.description}</p>

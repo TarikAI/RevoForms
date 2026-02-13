@@ -53,7 +53,9 @@ export function LayoutEditor({ settings, fields, onUpdateSettings, onFieldUpdate
       layout: {
         ...layout,
         responsive: {
-          ...layout.responsive,
+          mobile: layout.responsive?.mobile || 1,
+          tablet: layout.responsive?.tablet || 2,
+          desktop: layout.responsive?.desktop || 3,
           [breakpoint]: columns,
         },
       },

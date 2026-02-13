@@ -73,9 +73,10 @@ export class PDFService {
   static async extractText(pdfData: ArrayBuffer): Promise<string> {
     // This will be called server-side where pdf-parse is available
     try {
-      const pdfParse = await import('pdf-parse')
+      const pdfParseModule = await import('pdf-parse') as any
+      const pdfParse = pdfParseModule.default || pdfParseModule
       const buffer = Buffer.from(pdfData)
-      const data = await pdfParse.default(buffer)
+      const data = await pdfParse(buffer)
       return data.text
     } catch (error) {
       console.error('PDF text extraction error:', error)

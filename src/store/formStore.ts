@@ -96,6 +96,7 @@ interface FormState {
   clearFocusTarget: () => void
   setHasHydrated: (state: boolean) => void
   centerFormInView: (formId: string) => void
+  duplicateForm: (formId: string) => string | null
 }
 
 export const useFormStore = create<FormState>()(
@@ -233,6 +234,40 @@ export const useFormStore = create<FormState>()(
             canvasFocusTarget: { formId, timestamp: Date.now() }
           }))
         }
+      },
+
+      // Duplicate a form with all its fields
+      duplicateForm: (formId) => {
+        const form = get().forms.find(f => f.id === formId)
+        if (!form) return null
+        
+        const newId = nanoid()
+        const existingForms = get().forms
+        const newPosition = getViewportCenter(existingForms)
+        
+        const duplicatedForm: CanvasForm = {
+          ...form,
+          id: newId,
+          name: `${form.name} (Copy)`,
+          position: { 
+            x: newPosition.x + 50, 
+            y: newPosition.y + 50 
+          },
+          fields: form.fields.map(field => ({
+            ...field,
+            id: nanoid()
+          })),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        
+        set((state) => ({
+          forms: [...state.forms, duplicatedForm],
+          selectedFormId: newId,
+          canvasFocusTarget: { formId: newId, timestamp: Date.now() }
+        }))
+        
+        return newId
       },
     }),
     {

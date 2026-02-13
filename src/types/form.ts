@@ -28,6 +28,7 @@ export type FieldType =
   | 'heading'
   | 'paragraph'
   | 'html'
+  | 'address_autocomplete'
   | 'pagebreak'
   | 'country'
   | 'address'
@@ -97,10 +98,10 @@ export interface FormField {
   // Payment specific
   paymentType?: 'fixed' | 'variable' | 'subscription'
   amount?: number            // for fixed payments
-  currency?: string          // payment currency
+  paymentCurrency?: string   // payment currency
   billingInterval?: 'month' | 'year'  // for subscriptions
   // Matrix specific
-  rows?: { id: string; label: string; required?: boolean }[]
+  matrixRows?: { id: string; label: string; required?: boolean }[]
   columns?: { id: string; label: string; value?: any; description?: string }[]
   matrixType?: 'radio' | 'checkbox' | 'rating' | 'text'
   allowMultiple?: boolean    // Allow multiple selections per row

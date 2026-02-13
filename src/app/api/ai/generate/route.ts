@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { rateLimiter } from '@/lib/rate-limit'
 
 // ============ AI PROVIDER CONFIGURATION ============
 interface AIProvider {
@@ -386,6 +387,10 @@ function createFillResponse(selectedForm: any, userProfile: any): any {
 
 // ============ API ROUTE HANDLER ============
 export async function POST(request: NextRequest) {
+  // Rate limit: 20 requests per minute
+  const rateLimitResponse = rateLimiter(request, 20, 60000)
+  if (rateLimitResponse) return rateLimitResponse
+
   try {
     const { message, conversationHistory = [], selectedForm = null, userProfile = null } = await request.json()
 

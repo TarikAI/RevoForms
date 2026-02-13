@@ -21,7 +21,6 @@ import {
   Pause,
   RefreshCw,
   Flag,
-  Translate,
   Mic,
   Volume2,
   Calendar,
@@ -485,7 +484,7 @@ export function FormLocalization({
                 : 'bg-white/5 text-white/60'
             }`}
           >
-            <Translate className="w-4 h-4" />
+            <Languages className="w-4 h-4" />
             {translationMode === 'ai' ? 'AI Translation' : 'Manual'}
           </button>
         </div>

@@ -1,5 +1,2 @@
-/**
- * RevoForms Custom Hooks
- */
-
-export { useSpeechRecognition, useTextToSpeech } from './useSpeechRecognition'
+export { useSpeechRecognition } from './useSpeechRecognition'
+export { useKeyboardShortcuts, KEYBOARD_SHORTCUTS } from './useKeyboardShortcuts'

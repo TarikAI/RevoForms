@@ -164,6 +164,7 @@ export function LayoutPreview({
   const handleColumnsChange = (columns: number) => {
     onLayoutChange({
       ...layout,
+      type: layout?.type || 'single',
       columns,
     })
   }
@@ -171,6 +172,7 @@ export function LayoutPreview({
   const handleGapChange = (gap: string) => {
     onLayoutChange({
       ...layout,
+      type: layout?.type || 'single',
       gap,
     })
   }

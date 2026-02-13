@@ -18,7 +18,12 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(del:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(npx next build:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []

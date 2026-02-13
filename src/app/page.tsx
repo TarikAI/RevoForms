@@ -11,14 +11,15 @@ import { ExportModal } from '@/components/form-builder/ExportModal'
 import { VersionBadge } from '@/components/ui/VersionBadge'
 import { useFormStore } from '@/store/formStore'
 import { useChatStore } from '@/store/chatStore'
-import { useState, useEffect } from 'react'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 
 function FormExport() {
   const exportFormId = useFormStore((state) => state.exportFormId)
   const closeExport = useFormStore((state) => state.closeExport)
   const forms = useFormStore((state) => state.forms)
-  const form = forms.find((f) => f.id === exportFormId)
+  const form = forms.find((f) => f.id === exportFormId) || null
 
   return (
     <ExportModal
@@ -29,14 +30,30 @@ function FormExport() {
   )
 }
 
+function FormPreviewWrapper() {
+  const previewFormId = useFormStore((state) => state.previewFormId)
+  const closePreview = useFormStore((state) => state.closePreview)
+  const forms = useFormStore((state) => state.forms)
+  const form = forms.find((f) => f.id === previewFormId) || null
+
+  return (
+    <FormPreview
+      form={form}
+      isOpen={!!previewFormId}
+      onClose={closePreview}
+    />
+  )
+}
+
 export default function Home() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true)
-  const [isPropertiesExpanded, setIsPropertiesExpanded] = useState(true)
-  const [selectedFormId, setSelectedFormId] = useState<string | null>(null)
 
   const propertiesPanelOpen = useFormStore((state) => state.propertiesPanelOpen)
   const togglePropertiesPanel = useFormStore((state) => state.togglePropertiesPanel)
   const isAvatarFloating = useChatStore((state) => state.isAvatarFloating)
+
+  // Enable keyboard shortcuts
+  useKeyboardShortcuts({ enabled: true })
 
   return (
     <div className="min-h-screen bg-space">
@@ -74,7 +91,7 @@ export default function Home() {
 
       {/* Modals */}
       <ProfileModal />
-      <FormPreview />
+      <FormPreviewWrapper />
       <FormExport />
       
       {/* Version Badge */}

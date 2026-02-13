@@ -7,7 +7,7 @@ export interface Project {
   name: string
   description?: string
   color: string
-  icon?: React.ComponentType<any>
+  icon?: string // Store icon name as string (e.g., 'Folder', 'Briefcase', 'Zap')
   formIds: string[]
   collaborators?: string[]
   createdAt: Date
@@ -22,6 +22,7 @@ export interface Project {
 export interface ProjectFormData {
   id: string
   projectId: string
+  formId: string
   addedAt: Date
   status: 'draft' | 'published' | 'archived'
 }

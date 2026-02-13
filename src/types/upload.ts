@@ -86,17 +86,24 @@ export interface NanoBananaEditRequest {
 }
 
 export interface NanoBananaEdit {
-  type: 'text' | 'signature' | 'image' | 'stamp'
+  type: 'text' | 'signature' | 'image' | 'stamp' | 'typed' | 'handwriting'
   position: { x: number; y: number }
-  content: string  // Text content or base64 image
+  content?: string  // Text content or base64 image
   style?: {
     font?: string
+    fontFamily?: string
     fontSize?: number
     color?: string
     handwriting?: boolean
-    handwritingStyle?: 'casual' | 'formal' | 'cursive' | 'print'
+    handwritingStyle?: 'casual' | 'formal' | 'cursive' | 'print' | 'signature'
     rotation?: number
     opacity?: number
+    textShadow?: {
+      color?: string
+      blur?: number
+      x?: number
+      y?: number
+    }
   }
   bounds?: { width: number; height: number }
 }

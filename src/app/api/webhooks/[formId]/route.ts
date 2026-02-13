@@ -18,7 +18,7 @@ export async function GET(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { formId } = await params
     const formWebhooks = webhooks.get(formId) || []
 
     // Return sanitized webhook configs (without secrets)
@@ -53,7 +53,7 @@ export async function POST(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { formId } = await params
     const body = await request.json()
     const validatedData = WebhookSchema.parse(body)
 
@@ -117,7 +117,7 @@ export async function PUT(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { formId } = await params
     const { searchParams } = new URL(request.url)
     const webhookId = searchParams.get('id')
 
@@ -187,7 +187,7 @@ export async function DELETE(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { formId } = await params
     const { searchParams } = new URL(request.url)
     const webhookId = searchParams.get('id')
 
@@ -232,7 +232,7 @@ export async function PATCH(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { formId } = await params
     const { searchParams } = new URL(request.url)
     const webhookId = searchParams.get('id')
 

@@ -302,16 +302,17 @@ export function FloatingAvatar({ onOpenSidebar, onUploadClick }: FloatingAvatarP
     switch (type) {
       case 'create_form':
         addForm({
-          name: payload.name || 'New Form',
-          description: payload.description || '',
-          fields: payload.fields || [],
-          settings: { submitButtonText: payload.settings?.submitButtonText || 'Submit', successMessage: payload.settings?.successMessage || 'Thank you!', collectEmails: true },
-          styling: payload.styling || defaultStyling,
+          name: (payload as any).name || 'New Form',
+          description: (payload as any).description || '',
+          fields: (payload as any).fields || [],
+          settings: { submitButtonText: (payload as any).settings?.submitButtonText || 'Submit', successMessage: (payload as any).settings?.successMessage || 'Thank you!', collectEmails: true },
+          styling: (payload as any).styling || defaultStyling,
           size: { width: 420, height: 500 },
+          position: { x: 100, y: 100 },
         })
         break
       case 'update_form':
-        if (currentForm && payload.updates) updateForm(currentForm.id, payload.updates)
+        if (currentForm && (payload as any).updates) updateForm(currentForm.id, (payload as any).updates)
         break
     }
   }, [addForm, updateForm, currentForm])

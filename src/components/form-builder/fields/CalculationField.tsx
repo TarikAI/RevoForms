@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Calculator, FunctionSquare, Plus, Minus, X, Divide, Percent, Equals } from 'lucide-react'
+import { Calculator, FunctionSquare, Plus, Minus, X, Divide, Percent } from 'lucide-react'
 import { FormField } from '@/types/form'
 
 interface CalculationFieldProps {
@@ -14,25 +14,25 @@ interface CalculationFieldProps {
 }
 
 export function CalculationField({ field, value = 0, onChange, error, disabled, formData = {} }: CalculationFieldProps) {
-  const [formula, setFormula] = useState(field.formula || '')
+  const [formula, setFormula] = useState((field as any).formula || '')
   const [result, setResult] = useState(value)
   const [isEditing, setIsEditing] = useState(false)
   const [variables, setVariables] = useState<string[]>([])
 
-  const fieldConfig = field.fieldConfig || {}
+  const fieldConfig = (field as any).fieldConfig || {}
   const calculationType = fieldConfig.calculationType || 'simple' // 'simple' or 'advanced'
   const currency = fieldConfig.currency || 'USD'
   const decimalPlaces = fieldConfig.decimalPlaces !== undefined ? fieldConfig.decimalPlaces : 2
   const showFormula = fieldConfig.showFormula !== false
 
   useEffect(() => {
-    if (field.formula !== formula) {
-      setFormula(field.formula || '')
+    if ((field as any).formula !== formula) {
+      setFormula((field as any).formula || '')
     }
-    if (field.fieldRefs) {
-      setVariables(field.fieldRefs.filter((ref: any) => ref && typeof ref === 'string'))
+    if ((field as any).fieldRefs) {
+      setVariables((field as any).fieldRefs.filter((ref: any) => ref && typeof ref === 'string'))
     }
-  }, [field])
+  }, [field, formula])
 
   useEffect(() => {
     calculateResult()
@@ -127,11 +127,11 @@ export function CalculationField({ field, value = 0, onChange, error, disabled, 
   }
 
   const insertOperator = (operator: string) => {
-    setFormula(prev => prev + operator)
+    setFormula((prev: string) => prev + operator)
   }
 
   const insertVariable = (variable: string) => {
-    setFormula(prev => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + variable)
+    setFormula((prev: string) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + variable)
   }
 
   const formatResult = () => {
@@ -167,7 +167,7 @@ export function CalculationField({ field, value = 0, onChange, error, disabled, 
               </span>
             </div>
 
-            {field.canEdit !== false && (
+            {(field as any).canEdit !== false && (
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}

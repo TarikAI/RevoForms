@@ -111,7 +111,7 @@ async function handleTrigger(data: any) {
 
   // Find active Zapier subscriptions for this form
   // In production, query database
-  const subscriptions = [] // Would fetch from DB
+  const subscriptions: any[] = [] // Would fetch from DB
 
   // Send to all matching subscriptions
   const results = await Promise.allSettled(

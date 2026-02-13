@@ -8,7 +8,7 @@ import {
   Lock, Key, AlertTriangle, RefreshCw, Trash2, ChevronRight
 } from 'lucide-react'
 import { useFormStore } from '@/store/formStore'
-import { useResponseStore } from '@/store/responseStore'
+import { useResponseStore, exportResponses } from '@/store/responseStore'
 import { IntegrationManager } from './IntegrationManager'
 
 interface IntegrationsModalProps {
@@ -35,7 +35,7 @@ export function IntegrationsModal({ isOpen, onClose }: IntegrationsModalProps) {
   const [emailNotification, setEmailNotification] = useState('')
   
   const { forms } = useFormStore()
-  const { getFormAnalytics, getFormResponses, exportResponses, clearFormResponses } = useResponseStore()
+  const { getAnalytics, getResponsesByForm, clearFormResponses } = useResponseStore()
   
   // Select first form by default
   useEffect(() => {
@@ -45,8 +45,8 @@ export function IntegrationsModal({ isOpen, onClose }: IntegrationsModalProps) {
   }, [forms, selectedFormId])
 
   const selectedForm = forms.find(f => f.id === selectedFormId)
-  const analytics = selectedFormId ? getFormAnalytics(selectedFormId) : null
-  const responses = selectedFormId ? getFormResponses(selectedFormId) : []
+  const analytics = selectedFormId ? getAnalytics(selectedFormId) : null
+  const responses = selectedFormId ? getResponsesByForm(selectedFormId) : []
 
   const integrations: Integration[] = [
     { id: 'webhook', name: 'Webhook', icon: <Webhook className="w-5 h-5" />, description: 'Send form data to any URL', status: 'disconnected', color: 'from-orange-500 to-red-500' },

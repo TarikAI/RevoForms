@@ -63,8 +63,8 @@ export function EnhancedRangeField({ field, value = field.defaultValue || 50, on
   const getColor = (val: number) => {
     if (transitionColors && threshold.length > 0) {
       const activeThreshold = threshold
-        .filter(t => val >= t.value)
-        .sort((a, b) => b.value - a.value)[0]
+        .filter((t: any) => val >= t.value)
+        .sort((a: any, b: any) => b.value - a.value)[0]
       return activeThreshold?.color || color
     }
     return color
@@ -93,7 +93,7 @@ export function EnhancedRangeField({ field, value = field.defaultValue || 50, on
     let newValue = min + (percentage * (max - min))
 
     if (enableSnap && marks.length > 0) {
-      const nearestMark = marks.reduce((prev, curr) => {
+      const nearestMark = marks.reduce((prev: number, curr: number) => {
         return Math.abs(curr - newValue) < Math.abs(prev - newValue) ? curr : prev
       })
       newValue = nearestMark
@@ -188,8 +188,8 @@ export function EnhancedRangeField({ field, value = field.defaultValue || 50, on
 
     if (transitionColors && threshold.length > 0) {
       const activeThreshold = threshold
-        .filter(t => val >= t.value)
-        .sort((a, b) => b.value - a.value)[0]
+        .filter((t: any) => val >= t.value)
+        .sort((a: any, b: any) => b.value - a.value)[0]
       if (activeThreshold?.label) {
         display += ` - ${activeThreshold.label}`
       }
@@ -199,7 +199,7 @@ export function EnhancedRangeField({ field, value = field.defaultValue || 50, on
   }
 
   const getSizeClasses = () => {
-    const sizeClasses = {
+    const sizeClasses: Record<string, string> = {
       sm: 'h-1',
       md: 'h-2',
       lg: 'h-3'
@@ -227,7 +227,7 @@ export function EnhancedRangeField({ field, value = field.defaultValue || 50, on
           {transitionColors && getGradient() && (
             <div
               className="absolute inset-0"
-              style={{ background: getGradient() }}
+              style={{ background: getGradient() || undefined }}
             />
           )}
 
@@ -307,7 +307,7 @@ export function EnhancedRangeField({ field, value = field.defaultValue || 50, on
       {/* Threshold Labels */}
       {transitionColors && threshold.length > 0 && (
         <div className="flex justify-between text-xs">
-          {threshold.map((t, i) => (
+          {threshold.map((t: any, i: number) => (
             <span
               key={i}
               className={`text-${t.color} ${

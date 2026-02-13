@@ -177,24 +177,24 @@ export function ColorField({ field, value = '', onChange, error, disabled }: Col
 
   const handleColorChange = (color: string) => {
     setCurrentColor(color)
-    onChange?.(toString(rgbColor, colorFormat, alpha))
+    onChange?.(colorToString(rgbColor, colorFormat, alpha))
     setShowCopied(false)
   }
 
   const handleHueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const h = parseInt(e.target.value)
     const rgb = hslToRgb(h, 100, 50)
-    handleColorChange(toString(rgb, colorFormat, alpha))
+    handleColorChange(colorToString(rgb, colorFormat, alpha))
   }
 
   const handleSaturationLightnessChange = (s: number, l: number) => {
     const { h } = rgbToHsl(rgbColor.r, rgbColor.g, rgbColor.b)
     const rgb = hslToRgb(h, s, l)
-    handleColorChange(toString(rgb, colorFormat, alpha))
+    handleColorChange(colorToString(rgb, colorFormat, alpha))
   }
 
   const handleAlphaChange = (alpha: number) => {
-    handleColorChange(toString(rgbColor, colorFormat, alpha))
+    handleColorChange(colorToString(rgbColor, colorFormat, alpha))
   }
 
   const copyToClipboard = () => {
@@ -285,7 +285,7 @@ export function ColorField({ field, value = '', onChange, error, disabled }: Col
             onClick={() => {
               setColorFormat(format.value)
               if (parsedColor) {
-                setCurrentColor(toString(parsedColor.color, format.value, parsedColor.alpha))
+                setCurrentColor(colorToString(parsedColor.color, format.value, parsedColor.alpha))
               }
             }}
             className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
@@ -375,7 +375,7 @@ export function ColorField({ field, value = '', onChange, error, disabled }: Col
                   min="0"
                   max="100"
                   value={rgbToHsl(rgbColor.r, rgbColor.g, rgbColor.b).l * 100}
-                  onChange={(e) => handleSaturationLightChange(rgbToHsl(rgbColor.r, rgbColor.g, rgbColor.b).s, parseInt(e.target.value))}
+                  onChange={(e) => handleSaturationLightnessChange(rgbToHsl(rgbColor.r, rgbColor.g, rgbColor.b).s, parseInt(e.target.value))}
                   className="w-full accent-neon-cyan"
                 />
               </div>

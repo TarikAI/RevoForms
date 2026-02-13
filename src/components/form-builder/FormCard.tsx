@@ -205,7 +205,7 @@ export function FormCard({ form, zoom, onPositionChange, onDoubleClick }: FormCa
       const dx = (e.clientX - resizeRef.current.startX) / zoom
       setFormSize({ width: Math.max(280, Math.min(700, resizeRef.current.startWidth + dx)) })
     }
-    const onUp = () => { setIsResizing(false); document.body.style.cursor = ''; updateForm(form.id, { size: { width: formSize.width } }) }
+    const onUp = () => { setIsResizing(false); document.body.style.cursor = ''; updateForm(form.id, { size: { width: formSize.width, height: 'auto' } }) }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
@@ -289,7 +289,7 @@ export function FormCard({ form, zoom, onPositionChange, onDoubleClick }: FormCa
       case 'matrix':
         return (
           <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-            <p className="text-sm text-white/60 text-center">Matrix Field ({field.rows?.length || 0}x{field.columns?.length || 0})</p>
+            <p className="text-sm text-white/60 text-center">Matrix Field ({(field.rows as any) || 0}x{(field.columns as any) || 0})</p>
           </div>
         )
       case 'daterange':

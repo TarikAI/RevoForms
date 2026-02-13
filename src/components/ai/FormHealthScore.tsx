@@ -84,7 +84,7 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
     // Bonus points for good practices
     if (fields.some(f => f.conditionalLogic)) score += 10
     if (fields.some(f => f.type === 'file')) score += 5
-    if (fields.some(f => f.description)) score += 5
+    if (fields.some(f => f.helpText)) score += 5
 
     return Math.min(100, Math.max(0, score))
   }
@@ -149,7 +149,7 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
       })
     }
 
-    if (!fields.some(f => f.description)) {
+    if (!fields.some(f => f.helpText)) {
       recommendations.push({
         type: 'add_descriptions',
         priority: 'medium' as const,
@@ -170,16 +170,16 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
     return recommendations
   }
 
-  const generateInsights = () => {
-    const insights = []
+  const generateInsights = (): HealthMetrics['insights'] => {
+    const insights: HealthMetrics['insights'] = []
 
     if (submissions.length > 0) {
-      const completionRate = (submissions.filter(s => s.completed).length / submissions.length) * 100
+      const completionRate = (submissions.filter(s => s.status === 'complete').length / submissions.length) * 100
       insights.push({
         type: 'completion_rate',
         title: 'Completion Rate',
         value: `${completionRate.toFixed(1)}%`,
-        trend: completionRate > 70 ? 'up' : completionRate < 50 ? 'down' : 'stable',
+        trend: (completionRate > 70 ? 'up' : completionRate < 50 ? 'down' : 'stable') as "up" | "down" | "stable",
         description: completionRate > 70 ? 'Good completion rate' : 'Could be improved'
       })
 
@@ -188,7 +188,7 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
         type: 'avg_time',
         title: 'Avg. Completion Time',
         value: avgTime > 60 ? `${Math.floor(avgTime / 60)}m ${Math.floor(avgTime % 60)}s` : `${Math.floor(avgTime)}s`,
-        trend: 'stable',
+        trend: 'stable' as const,
         description: avgTime > 300 ? 'Longer than average' : 'Within optimal range'
       })
     }
@@ -197,7 +197,7 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
       type: 'field_optimization',
       title: 'Optimization Potential',
       value: 'High',
-      trend: 'up',
+      trend: 'up' as const,
       description: 'Several fields can be optimized for better UX'
     })
 
@@ -221,7 +221,7 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
     }
   }
 
-  const getTrendIcon = (trend: string) => {
+  const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
     switch (trend) {
       case 'up':
         return <TrendingUp className="w-4 h-4 text-green-400" />
@@ -288,15 +288,15 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
                     fill="none"
                     strokeDasharray={`${2 * Math.PI * 56}`}
                     initial={{ strokeDashoffset: 2 * Math.PI * 56 }}
-                    animate={{ strokeDashoffset: 2 * Math.PI * 56 * (1 - metrics.score / 100) }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 56 * (1 - (metrics?.score || 0) / 100) }}
                     transition={{ duration: 1, ease: 'easeOut' }}
-                    className={getScoreColor(metrics.score)}
+                    className={getScoreColor(metrics?.score || 0)}
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <p className={`text-3xl font-bold ${getScoreColor(metrics.score)}`}>
-                      {metrics.score}
+                    <p className={`text-3xl font-bold ${getScoreColor(metrics?.score || 0)}`}>
+                      {metrics?.score}
                     </p>
                     <p className="text-xs text-white/60">out of 100</p>
                   </div>
@@ -306,9 +306,9 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
 
             <div className="text-center">
               <p className="text-white/80">
-                {metrics.score >= 80 && "Excellent! Your form is optimized for success."}
-                {metrics.score >= 60 && metrics.score < 80 && "Good, but there's room for improvement."}
-                {metrics.score < 60 && "Several optimizations are recommended."}
+                {metrics?.score && metrics.score >= 80 && "Excellent! Your form is optimized for success."}
+                {metrics?.score && metrics.score >= 60 && metrics.score < 80 && "Good, but there's room for improvement."}
+                {metrics?.score && metrics.score < 60 && "Several optimizations are recommended."}
               </p>
             </div>
           </div>
@@ -316,14 +316,14 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
       </div>
 
       {/* Issues */}
-      {metrics?.issues.length > 0 && (
+      {metrics?.issues && metrics.issues.length > 0 && (
         <div className="bg-black/40 rounded-xl p-6 border border-white/10">
           <h4 className="text-white font-medium mb-4 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-yellow-400" />
             Issues Found
           </h4>
           <div className="space-y-3">
-            {metrics.issues.map((issue, index) => (
+            {metrics.issues?.map((issue, index) => (
               <div key={index} className="flex items-start gap-3">
                 {getSeverityIcon(issue.severity)}
                 <div className="flex-1">
@@ -336,14 +336,14 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
       )}
 
       {/* Recommendations */}
-      {metrics?.recommendations.length > 0 && (
+      {metrics?.recommendations && metrics.recommendations.length > 0 && (
         <div className="bg-black/40 rounded-xl p-6 border border-white/10">
           <h4 className="text-white font-medium mb-4 flex items-center gap-2">
             <Zap className="w-4 h-4 text-purple-400" />
             Recommendations
           </h4>
           <div className="space-y-4">
-            {metrics.recommendations.map((rec, index) => (
+            {metrics.recommendations?.map((rec, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, x: -20 }}
@@ -378,14 +378,14 @@ export function FormHealthScore({ fields, submissions = [], onApplyRecommendatio
       )}
 
       {/* Insights */}
-      {metrics?.insights.length > 0 && (
+      {metrics?.insights && metrics.insights.length > 0 && (
         <div className="bg-black/40 rounded-xl p-6 border border-white/10">
           <h4 className="text-white font-medium mb-4 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-blue-400" />
             Key Insights
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {metrics.insights.map((insight, index) => (
+            {metrics.insights?.map((insight, index) => (
               <div key={index} className="p-4 bg-white/5 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <h5 className="text-sm text-white/80">{insight.title}</h5>

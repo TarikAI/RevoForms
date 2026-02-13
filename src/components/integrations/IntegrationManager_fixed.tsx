@@ -1,3 +1,7 @@
+'use client'
+
+import { useState } from 'react'
+
 // Integration Configuration Form Component
 function IntegrationConfigForm({
   service,

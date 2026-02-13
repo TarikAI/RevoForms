@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Eye,
   EyeOff,
+  Edit,
   Copy,
   Trash2,
   Download,
@@ -24,7 +25,6 @@ import {
   ChevronRight,
   Plus,
   Settings,
-  Compare,
   GitMerge,
   GitCommit,
   Clock,
@@ -217,11 +217,11 @@ export function FormVersioning({
       status: 'draft' as const,
       changes: [
         {
-          type: 'restore',
+          type: 'restore' as const,
           description: `Restored from version ${version.version}`,
           timestamp: new Date().toISOString()
         },
-        ...version.changes
+        ...(version.changes as any)
       ]
     }
 
@@ -322,7 +322,7 @@ export function FormVersioning({
                 : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'
             }`}
           >
-            <Compare className="w-4 h-4" />
+            <GitMerge className="w-4 h-4" />
             Compare
           </button>
 
@@ -665,7 +665,7 @@ function downloadVersion(version: FormVersion) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `${formName}_v${version.version}.json`
+  a.download = `${version.name.replace(/\s+/g, '_')}_v${version.version}.json`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

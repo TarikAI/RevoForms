@@ -50,7 +50,8 @@ interface MappingRule {
 }
 
 export function FormImportExport() {
-  const { currentForm, forms } = useFormStore()
+  const { forms, selectedFormId } = useFormStore()
+  const currentForm = forms.find(f => f.id === selectedFormId) || null
   const [activeTab, setActiveTab] = useState<'import' | 'export'>('import')
   const [selectedExportFormat, setSelectedExportFormat] = useState('json')
   const [selectedImportSource, setSelectedImportSource] = useState('file')
@@ -729,7 +730,7 @@ export function FormImportExport() {
                           <div className="flex-1">
                             <p className="font-medium text-slate-900 dark:text-slate-100">{form.name}</p>
                             <p className="text-sm text-slate-600 dark:text-slate-400">
-                              {form.fields.length} fields • {form.responses?.length || 0} responses
+                              {form.fields.length} fields • {(form as any).responses?.length || 0} responses
                             </p>
                           </div>
                         </label>

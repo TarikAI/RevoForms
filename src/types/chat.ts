@@ -15,12 +15,17 @@ export interface ChatMessage {
   }>
 }
 
-export type AvatarState = 
+export type AvatarState =
   | 'idle'
   | 'listening'
   | 'thinking'
   | 'speaking'
   | 'error'
+  | 'greeting'
+  | 'celebrating'
+  | 'ready-to-send'
+  | 'interviewing'
+  | 'waiting'
 
 export interface ConversationContext {
   currentFormId?: string

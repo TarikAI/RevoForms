@@ -4,45 +4,55 @@ import { useState } from 'react'
 import { X, FolderPlus, Briefcase, Users, ShoppingBag, GraduationCap, Heart, Code, Megaphone } from 'lucide-react'
 import { useProjectStore } from '@/store/projectStore'
 
+// Icon mapping from string to component
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+  Briefcase,
+  ShoppingBag,
+  GraduationCap,
+  Heart,
+  Code,
+  Megaphone,
+}
+
 const PROJECT_TEMPLATES = [
   {
     name: 'Business',
-    icon: Briefcase,
+    icon: 'Briefcase',
     color: '#3B82F6',
     description: 'Forms for business operations, HR, and internal processes',
     tags: ['HR', 'Operations', 'Management']
   },
   {
     name: 'E-commerce',
-    icon: ShoppingBag,
+    icon: 'ShoppingBag',
     color: '#10B981',
     description: 'Product forms, customer feedback, and order management',
     tags: ['Products', 'Customers', 'Orders']
   },
   {
     name: 'Education',
-    icon: GraduationCap,
+    icon: 'GraduationCap',
     color: '#8B5CF6',
     description: 'Course registration, surveys, and academic forms',
     tags: ['Courses', 'Surveys', 'Assessments']
   },
   {
     name: 'Healthcare',
-    icon: Heart,
+    icon: 'Heart',
     color: '#EF4444',
     description: 'Patient forms, appointments, and medical records',
     tags: ['Patients', 'Appointments', 'Records']
   },
   {
     name: 'Technology',
-    icon: Code,
+    icon: 'Code',
     color: '#06B6D4',
     description: 'Bug reports, feature requests, and feedback forms',
     tags: ['Bug Reports', 'Features', 'Feedback']
   },
   {
     name: 'Marketing',
-    icon: Megaphone,
+    icon: 'Megaphone',
     color: '#F59E0B',
     description: 'Campaign forms, lead generation, and market research',
     tags: ['Campaigns', 'Leads', 'Research']
@@ -138,7 +148,7 @@ export function CreateProjectModal({ onClose, onSuccess }: CreateProjectModalPro
             <h3 className="text-lg font-semibold text-white mb-4">Start with a template</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {PROJECT_TEMPLATES.map((template) => {
-                const Icon = template.icon
+                const Icon = ICON_MAP[template.icon!] || FolderPlus
                 return (
                   <button
                     key={template.name}

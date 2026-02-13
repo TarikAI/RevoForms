@@ -31,13 +31,12 @@ export async function POST(
 ) {
   try {
     const { formId } = await params
-    const headersList = headers()
+    const headersList = await headers()
 
     // Get client information
     const userAgent = headersList.get('user-agent') || undefined
     const ip = headersList.get('x-forwarded-for') ||
               headersList.get('x-real-ip') ||
-              request.ip ||
               undefined
     const referrer = headersList.get('referer') || undefined
 

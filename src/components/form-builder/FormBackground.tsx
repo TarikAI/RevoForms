@@ -5,7 +5,6 @@ import {
   Image,
   Upload,
   Palette,
-  Gradient,
   Video,
   X,
   Check,
@@ -292,9 +291,9 @@ export function FormBackground({ background, onChange }: FormBackgroundProps) {
           {/* Type Filter */}
           <div className="flex gap-1">
             {[
-              { type: 'color', icon: Palette, label: 'Colors' },
-              { type: 'gradient', icon: Gradient, label: 'Gradients' },
-              { type: 'pattern', icon: Zap, label: 'Patterns' }
+              { type: 'color' as const, icon: Palette, label: 'Colors' },
+              { type: 'gradient' as const, icon: Sparkles, label: 'Gradients' },
+              { type: 'pattern' as const, icon: Zap, label: 'Patterns' }
             ].map(({ type, icon: Icon, label }) => (
               <button
                 key={type}
@@ -401,7 +400,7 @@ export function FormBackground({ background, onChange }: FormBackgroundProps) {
                 <input
                   type="color"
                   value={customValue?.colors?.[0] || '#000000'}
-                  onChange={(e) => setCustomValue(prev => ({
+                  onChange={(e) => setCustomValue((prev: any) => ({
                     ...prev,
                     type: 'linear',
                     direction: 'to right',
@@ -412,7 +411,7 @@ export function FormBackground({ background, onChange }: FormBackgroundProps) {
                 <input
                   type="color"
                   value={customValue?.colors?.[1] || '#FFFFFF'}
-                  onChange={(e) => setCustomValue(prev => ({
+                  onChange={(e) => setCustomValue((prev: any) => ({
                     ...prev,
                     colors: [prev?.colors?.[0] || '#000000', e.target.value]
                   }))}

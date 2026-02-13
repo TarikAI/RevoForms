@@ -23,9 +23,12 @@ export function SignatureField({ field, value, onChange, error, disabled, onSign
 
   useEffect(() => {
     if (value && canvasRef.current) {
+      const canvas = canvasRef.current
       const img = new Image()
       img.onload = () => {
-        const ctx = canvasRef.current.getContext('2d')!
+        if (!canvasRef.current) return
+        const ctx = canvasRef.current.getContext('2d')
+        if (!ctx) return
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
         ctx.drawImage(img, 0, 0, canvasRef.current.width, canvasRef.current.height)
         setIsEmpty(false)
@@ -71,21 +74,24 @@ export function SignatureField({ field, value, onChange, error, disabled, onSign
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !canvasRef.current || disabled) return
 
-    const rect = canvasRef.current.getBoundingClientRect()
+    const canvas = canvasRef.current
+    const rect = canvas.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
 
-    const ctx = canvasRef.current.getContext('2d')!
+    const ctx = canvas.getContext('2d')!
+    const width = canvas.width
+    const height = canvas.height
 
     if (signatureMode === 'type') {
       // Clear and redraw typed signature
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+      ctx.clearRect(0, 0, width, height)
 
       // Redraw signature value if exists
       if (value) {
         const img = new Image()
         img.onload = () => {
-          ctx.drawImage(img, 0, 0, canvasRef.current.width, canvasRef.current.height)
+          ctx.drawImage(img, 0, 0, width, height)
         }
         img.src = value
       }
@@ -143,6 +149,7 @@ export function SignatureField({ field, value, onChange, error, disabled, onSign
     if (!canvasRef.current) return
 
     const ctx = canvasRef.current.getContext('2d')
+    if (!ctx) return
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
     onChange?.( null )
     setIsEmpty(true)

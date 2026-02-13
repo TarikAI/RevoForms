@@ -322,52 +322,64 @@ export function FormInterview({ form, isOpen, onClose, creatorProfile }: FormInt
             style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
           >
             <option value="" style={{ backgroundColor: '#1a1a2e' }}>Select an option...</option>
-            {(currentField.options || []).map((opt, idx) => (
-              <option key={`${currentField.id}-select-${idx}`} value={opt} style={{ backgroundColor: '#1a1a2e' }}>{opt}</option>
-            ))}
+            {(currentField.options || []).map((opt, idx) => {
+              const value = typeof opt === 'string' ? opt : opt.value
+              const label = typeof opt === 'string' ? opt : opt.label
+              return (
+                <option key={`${currentField.id}-select-${idx}`} value={value} style={{ backgroundColor: '#1a1a2e' }}>{label}</option>
+              )
+            })}
           </select>
         )
 
       case 'radio':
         return (
           <div className="space-y-3">
-            {(currentField.options || []).map((opt, idx) => (
-              <label key={`${currentField.id}-radio-${idx}`} className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                <input
-                  type="radio"
-                  name={currentField.id}
-                  value={opt}
-                  checked={inputValue === opt}
-                  onChange={(e) => handleFieldChange(e.target.value)}
-                  className="w-5 h-5 accent-neon-cyan"
-                />
-                <span className="text-white">{opt}</span>
-              </label>
-            ))}
+            {(currentField.options || []).map((opt, idx) => {
+              const value = typeof opt === 'string' ? opt : opt.value
+              const label = typeof opt === 'string' ? opt : opt.label
+              return (
+                <label key={`${currentField.id}-radio-${idx}`} className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                  <input
+                    type="radio"
+                    name={currentField.id}
+                    value={value}
+                    checked={inputValue === value}
+                    onChange={(e) => handleFieldChange(e.target.value)}
+                    className="w-5 h-5 accent-neon-cyan"
+                  />
+                  <span className="text-white">{label}</span>
+                </label>
+              )
+            })}
           </div>
         )
 
       case 'checkbox':
         return (
           <div className="space-y-3">
-            {(currentField.options || []).map((opt, idx) => (
-              <label key={`${currentField.id}-checkbox-${idx}`} className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                <input
-                  type="checkbox"
-                  value={opt}
-                  checked={(formData[currentField.id] || []).includes(opt)}
-                  onChange={(e) => {
-                    const current = formData[currentField.id] || []
-                    const updated = e.target.checked 
-                      ? [...current, opt]
-                      : current.filter((v: string) => v !== opt)
-                    handleFieldChange(updated)
-                  }}
-                  className="w-5 h-5 accent-neon-cyan"
-                />
-                <span className="text-white">{opt}</span>
-              </label>
-            ))}
+            {(currentField.options || []).map((opt, idx) => {
+              const value = typeof opt === 'string' ? opt : opt.value
+              const label = typeof opt === 'string' ? opt : opt.label
+              return (
+                <label key={`${currentField.id}-checkbox-${idx}`} className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                  <input
+                    type="checkbox"
+                    value={value}
+                    checked={(formData[currentField.id] || []).includes(value)}
+                    onChange={(e) => {
+                      const current = formData[currentField.id] || []
+                      const updated = e.target.checked
+                        ? [...current, value]
+                        : current.filter((v: string) => v !== value)
+                      handleFieldChange(updated)
+                    }}
+                    className="w-5 h-5 accent-neon-cyan"
+                  />
+                  <span className="text-white">{label}</span>
+                </label>
+              )
+            })}
           </div>
         )
 
@@ -439,15 +451,15 @@ export function FormInterview({ form, isOpen, onClose, creatorProfile }: FormInt
           <div className="space-y-2">
             <input
               type="date"
-              value={inputValue?.start || ''}
-              onChange={(e) => handleFieldChange({ ...inputValue, start: e.target.value })}
+              value={(inputValue as any)?.start || ''}
+              onChange={(e) => handleFieldChange({ ...(inputValue as any), start: e.target.value })}
               placeholder="Start date"
               className={`${baseInputClass} [color-scheme:dark]`}
             />
             <input
               type="date"
-              value={inputValue?.end || ''}
-              onChange={(e) => handleFieldChange({ ...inputValue, end: e.target.value })}
+              value={(inputValue as any)?.end || ''}
+              onChange={(e) => handleFieldChange({ ...(inputValue as any), end: e.target.value })}
               placeholder="End date"
               className={`${baseInputClass} [color-scheme:dark]`}
             />
@@ -513,8 +525,8 @@ export function FormInterview({ form, isOpen, onClose, creatorProfile }: FormInt
             <input
               type="text"
               placeholder="Start typing address..."
-              value={inputValue?.formatted || ''}
-              onChange={(e) => handleFieldChange({ ...inputValue, formatted: e.target.value })}
+              value={(inputValue as any)?.formatted || ''}
+              onChange={(e) => handleFieldChange({ ...(inputValue as any), formatted: e.target.value })}
               className={baseInputClass}
             />
             <p className="text-xs text-white/40">Google Places autocomplete</p>
@@ -549,7 +561,7 @@ export function FormInterview({ form, isOpen, onClose, creatorProfile }: FormInt
       case 'matrix':
         return (
           <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
-            <p className="text-white/60">Matrix Field ({currentField.rows?.length || 0}x{currentField.columns?.length || 0})</p>
+            <p className="text-white/60">Matrix Field ({(currentField.rows as any) || 0}x{(currentField.columns as any) || 0})</p>
           </div>
         )
 
@@ -569,30 +581,30 @@ export function FormInterview({ form, isOpen, onClose, creatorProfile }: FormInt
             <input
               type="text"
               placeholder="Street Address"
-              value={inputValue?.street || ''}
-              onChange={(e) => handleFieldChange({ ...inputValue, street: e.target.value })}
+              value={(inputValue as any)?.street || ''}
+              onChange={(e) => handleFieldChange({ ...(inputValue as any), street: e.target.value })}
               className={baseInputClass}
             />
             <div className="flex gap-2">
               <input
                 type="text"
                 placeholder="City"
-                value={inputValue?.city || ''}
-                onChange={(e) => handleFieldChange({ ...inputValue, city: e.target.value })}
+                value={(inputValue as any)?.city || ''}
+                onChange={(e) => handleFieldChange({ ...(inputValue as any), city: e.target.value })}
                 className={`${baseInputClass} flex-1`}
               />
               <input
                 type="text"
                 placeholder="State"
-                value={inputValue?.state || ''}
-                onChange={(e) => handleFieldChange({ ...inputValue, state: e.target.value })}
+                value={(inputValue as any)?.state || ''}
+                onChange={(e) => handleFieldChange({ ...(inputValue as any), state: e.target.value })}
                 className={`${baseInputClass} w-24`}
               />
               <input
                 type="text"
                 placeholder="ZIP"
-                value={inputValue?.postalCode || ''}
-                onChange={(e) => handleFieldChange({ ...inputValue, postalCode: e.target.value })}
+                value={(inputValue as any)?.postalCode || ''}
+                onChange={(e) => handleFieldChange({ ...(inputValue as any), postalCode: e.target.value })}
                 className={`${baseInputClass} w-24`}
               />
             </div>
@@ -668,11 +680,11 @@ export function FormInterview({ form, isOpen, onClose, creatorProfile }: FormInt
         return (
           <CalculationField
             field={currentField}
-            value={inputValue}
+            value={Number(inputValue) || 0}
             onChange={handleFieldChange}
-            error={fieldErrors[currentField.id]}
-            disabled={currentField.disabled}
-            formData={responses}
+            error={undefined}
+            disabled={(currentField as any).disabled}
+            formData={formData}
           />
         )
 

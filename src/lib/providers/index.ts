@@ -25,6 +25,16 @@ export {
   isImageEditingAvailable,
 } from './image-edit-provider'
 
+// Image Generation Providers (Pollinations fallback)
+export {
+  type ImageGenerationRequest,
+  type ImageGenerationResult,
+  generateImage,
+  generateImageBase64,
+  generateFormImage,
+  getAvailableProviders,
+} from './image-generation-provider'
+
 // PDF Provider
 export {
   type PDFFieldInfo,

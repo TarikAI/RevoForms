@@ -214,7 +214,7 @@ export function ABTesting({ formId, formName, onTestCreate, onTestUpdate }: ABTe
       confidence: 98,
       significance: 10,
       goals: {
-        primary: 'completion_rate'
+        primary: 'conversion_rate'
       },
       trafficDistribution: 'equal',
       created: '2024-01-01T00:00:00Z',
@@ -469,6 +469,7 @@ export function ABTesting({ formId, formName, onTestCreate, onTestUpdate }: ABTe
             const winner = test.winningVariant ? test.variants.find(v => v.id === test.winningVariant) : null
 
             return (
+              <>
               <motion.div
                 key={test.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -688,10 +689,9 @@ export function ABTesting({ formId, formName, onTestCreate, onTestUpdate }: ABTe
                   </div>
                 )}
               </motion.div>
-            )
-          })}
+              </>
+            )}))}
         </div>
-      )}
 
       {/* Create/Edit Test Modal */}
       <AnimatePresence>
@@ -806,6 +806,7 @@ export function ABTesting({ formId, formName, onTestCreate, onTestUpdate }: ABTe
                     } else {
                       // Create new test with a control variant
                       const newTest: ABTest = {
+                        id: `test_${Date.now()}`,
                         name: 'New Test',
                         description: '',
                         hypothesis: '',
@@ -820,10 +821,14 @@ export function ABTesting({ formId, formName, onTestCreate, onTestUpdate }: ABTe
                             changes: []
                           }
                         ],
+                        confidence: 0,
+                        significance: 10,
                         goals: {
                           primary: 'conversion_rate'
                         },
-                        trafficDistribution: 'equal' as const
+                        trafficDistribution: 'equal' as const,
+                        created: new Date().toISOString(),
+                        modified: new Date().toISOString()
                       }
                       createTest(newTest)
                     }

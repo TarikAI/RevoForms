@@ -9,6 +9,7 @@ import {
   BookOpen, Play, Pause
 } from 'lucide-react'
 import { AvatarFace } from './AvatarFace'
+import type { AvatarState } from '@/types/chat'
 
 /**
  * SmartInterviewAvatar - "Forms That Talk Back" v2
@@ -55,8 +56,6 @@ interface SmartInterviewAvatarProps {
   voiceEnabled?: boolean
   autoStart?: boolean
 }
-
-type AvatarState = 'idle' | 'greeting' | 'listening' | 'thinking' | 'speaking' | 'celebrating' | 'interviewing'
 
 interface ChatMessage {
   id: string

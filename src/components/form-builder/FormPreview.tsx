@@ -18,6 +18,7 @@ interface FormPreviewProps {
   form: CanvasForm | null
   isOpen: boolean
   onClose: () => void
+  previewMode?: 'edit' | 'success'
 }
 
 type DeviceView = 'desktop' | 'tablet' | 'mobile'
@@ -61,7 +62,7 @@ function matchFieldToProfile(field: FormField, profile: any): string | null {
   return null
 }
 
-export function FormPreview({ form, isOpen, onClose }: FormPreviewProps) {
+export function FormPreview({ form, isOpen, onClose, previewMode = 'edit' }: FormPreviewProps) {
   const [deviceView, setDeviceView] = useState<DeviceView>('desktop')
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -326,7 +327,7 @@ export function FormPreview({ form, isOpen, onClose }: FormPreviewProps) {
             onChange={(calcValue) => handleChange(field.id, calcValue)}
             error={errors[field.id]}
             disabled={previewMode === 'success'}
-            formData={responses}
+            formData={formData}
           />
         )
       case 'address':

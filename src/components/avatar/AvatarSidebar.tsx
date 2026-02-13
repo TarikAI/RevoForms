@@ -267,6 +267,7 @@ export function AvatarSidebar({ isExpanded, onToggle, onPreview }: AvatarSidebar
         },
         styling: result.generatedForm.styling || defaultStyling,
         size: { width: 420, height: 500 },
+        position: { x: 100, y: 100 },
       })
 
       if (pendingFile) {
@@ -298,6 +299,7 @@ export function AvatarSidebar({ isExpanded, onToggle, onPreview }: AvatarSidebar
     if (!response.action || response.action.type === 'none') return
 
     const { type, payload } = response.action
+    const payloadData: any = payload
     const defaultStyling = {
       theme: 'glassmorphism',
       colors: {
@@ -317,31 +319,32 @@ export function AvatarSidebar({ isExpanded, onToggle, onPreview }: AvatarSidebar
     switch (type) {
       case 'create_form':
         addForm({
-          name: payload.name || 'New Form',
-          description: payload.description || '',
-          fields: payload.fields || [],
+          name: (payload as any).name || 'New Form',
+          description: (payload as any).description || '',
+          fields: (payload as any).fields || [],
           settings: {
-            submitButtonText: payload.settings?.submitButtonText || 'Submit',
-            successMessage: payload.settings?.successMessage || 'Thank you!',
+            submitButtonText: (payload as any).settings?.submitButtonText || 'Submit',
+            successMessage: (payload as any).settings?.successMessage || 'Thank you!',
             collectEmails: true,
           },
-          styling: payload.styling || defaultStyling,
+          styling: (payload as any).styling || defaultStyling,
           size: { width: 420, height: 500 },
+          position: { x: 100, y: 100 },
         })
         break
 
       case 'update_form':
-        if (currentForm && payload.updates) {
-          updateForm(currentForm.id, payload.updates)
+        if (currentForm && (payload as any).updates) {
+          updateForm(currentForm.id, (payload as any).updates)
         }
         break
 
       case 'add_fields':
-        if (currentForm && payload.fields) {
-          const newFields = payload.fields.map((f: any, i: number) => ({
+        if (currentForm && (payload as any).fields) {
+          const newFields = (payload as any).fields.map((f: any, i: number) => ({
             ...f, id: f.id || `f_${Date.now()}_${i}`
           }))
-          const position = payload.position || 'end'
+          const position = (payload as any).position || 'end'
           let updatedFields = [...currentForm.fields]
           if (position === 'start') updatedFields = [...newFields, ...updatedFields]
           else if (typeof position === 'number') updatedFields.splice(position, 0, ...newFields)
@@ -351,8 +354,8 @@ export function AvatarSidebar({ isExpanded, onToggle, onPreview }: AvatarSidebar
         break
 
       case 'remove_fields':
-        if (currentForm && payload.fieldLabels) {
-          const labelsToRemove = payload.fieldLabels.map((l: string) => l.toLowerCase())
+        if (currentForm && (payload as any).fieldLabels) {
+          const labelsToRemove = (payload as any).fieldLabels.map((l: string) => l.toLowerCase())
           const updatedFields = currentForm.fields.filter(
             f => !labelsToRemove.includes(f.label.toLowerCase())
           )
@@ -361,22 +364,22 @@ export function AvatarSidebar({ isExpanded, onToggle, onPreview }: AvatarSidebar
         break
 
       case 'update_field':
-        if (currentForm && payload.fieldLabel && payload.updates) {
+        if (currentForm && (payload as any).fieldLabel && (payload as any).updates) {
           const fieldIndex = currentForm.fields.findIndex(
-            f => f.label.toLowerCase() === payload.fieldLabel.toLowerCase()
+            f => f.label.toLowerCase() === (payload as any).fieldLabel.toLowerCase()
           )
           if (fieldIndex >= 0) {
             const updatedFields = [...currentForm.fields]
-            updatedFields[fieldIndex] = { ...updatedFields[fieldIndex], ...payload.updates }
+            updatedFields[fieldIndex] = { ...updatedFields[fieldIndex], ...(payload as any).updates }
             updateForm(currentForm.id, { fields: updatedFields })
           }
         }
         break
 
       case 'update_styling':
-        if (currentForm && payload.styling) {
+        if (currentForm && (payload as any).styling) {
           updateForm(currentForm.id, {
-            styling: { ...currentForm.styling, ...payload.styling }
+            styling: { ...currentForm.styling, ...(payload as any).styling }
           })
         }
         break
@@ -385,16 +388,16 @@ export function AvatarSidebar({ isExpanded, onToggle, onPreview }: AvatarSidebar
         if (currentForm) {
           addForm({
             ...currentForm,
-            name: payload.newName || `${currentForm.name} (Copy)`,
+            name: (payload as any).newName || `${currentForm.name} (Copy)`,
             position: { x: currentForm.position.x + 50, y: currentForm.position.y + 50 },
           })
         }
         break
 
       case 'fill_form':
-        if (currentForm && payload.fieldValues) {
+        if (currentForm && (payload as any).fieldValues) {
           const updatedFields = currentForm.fields.map(field => {
-            const value = payload.fieldValues[field.id] || payload.fieldValues[field.label.toLowerCase()]
+            const value = (payload as any).fieldValues[field.id] || (payload as any).fieldValues[field.label.toLowerCase()]
             if (value) return { ...field, defaultValue: value }
             return field
           })

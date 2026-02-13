@@ -8,6 +8,7 @@ import {
   Sparkles, HelpCircle
 } from 'lucide-react'
 import { AvatarFace } from './AvatarFace'
+import type { AvatarState } from '@/types/chat'
 
 /**
  * InterviewAvatar - Revolutionary "Forms That Talk Back" Feature
@@ -41,8 +42,6 @@ interface InterviewAvatarProps {
   minimizedByDefault?: boolean
   voiceEnabled?: boolean
 }
-
-type AvatarState = 'idle' | 'greeting' | 'listening' | 'thinking' | 'speaking' | 'celebrating'
 
 interface ChatMessage {
   id: string

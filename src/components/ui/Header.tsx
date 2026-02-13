@@ -1,25 +1,30 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Sparkles, Plus, Settings, HelpCircle, User, UserCircle, FileText, ChevronDown, Focus, Trash2, Layers, LayoutTemplate, BarChart3, Plug, Shield, Code, Users, Database, Bell, Mail, Lock, Menu, X, FolderPlus } from 'lucide-react'
+import { Sparkles, Plus, Settings, HelpCircle, User, UserCircle, FileText, ChevronDown, Focus, Trash2, Layers, LayoutTemplate, BarChart3, Plug, Shield, Code, Users, Database, Bell, Mail, Lock, Menu, X, FolderPlus, Share2, Copy } from 'lucide-react'
 import { useFormStore } from '@/store/formStore'
 import { useChatStore } from '@/store/chatStore'
 import { useProfileStore, getProfileCompleteness } from '@/store/profileStore'
 import { TemplatesModal } from '@/components/templates/TemplatesModal'
 import { IntegrationsModal } from '@/components/integrations/IntegrationsModal'
+import { ShareModal } from '@/components/share/ShareModal'
+import { signIn, signOut, useSession } from 'next-auth/react'
 
 export function Header() {
+  const { data: session } = useSession()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showFormsMenu, setShowFormsMenu] = useState(false)
   const [showTemplatesModal, setShowTemplatesModal] = useState(false)
   const [showIntegrationsModal, setShowIntegrationsModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [shareFormId, setShareFormId] = useState<string | null>(null)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showToolsMenu, setShowToolsMenu] = useState(false)
   const [mounted, setMounted] = useState(false)
   const formsMenuRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const toolsMenuRef = useRef<HTMLDivElement>(null)
-  
+
   // Handle hydration
   useEffect(() => { setMounted(true) }, [])
   
@@ -28,6 +33,7 @@ export function Header() {
   const selectForm = useFormStore((state) => state.selectForm)
   const focusOnForm = useFormStore((state) => state.focusOnForm)
   const deleteForm = useFormStore((state) => state.deleteForm)
+  const duplicateForm = useFormStore((state) => state.duplicateForm)
   const { clearMessages, focusInput } = useChatStore()
   const { profile, openProfileModal } = useProfileStore()
   
@@ -70,6 +76,21 @@ export function Header() {
     e.stopPropagation()
     if (confirm('Delete this form?')) {
       deleteForm(formId)
+    }
+  }
+
+  const handleShareForm = (e: React.MouseEvent, formId: string) => {
+    e.stopPropagation()
+    setShareFormId(formId)
+    setShowShareModal(true)
+    setShowFormsMenu(false)
+  }
+
+  const handleDuplicateForm = (e: React.MouseEvent, formId: string) => {
+    e.stopPropagation()
+    const newId = duplicateForm(formId)
+    if (newId) {
+      setShowFormsMenu(false)
     }
   }
 
@@ -203,6 +224,20 @@ export function Header() {
                         </div>
                         
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => handleShareForm(e, form.id)}
+                            className="p-1.5 hover:bg-neon-cyan/20 rounded-lg text-white/50 hover:text-neon-cyan transition-all"
+                            title="Share form"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={(e) => handleDuplicateForm(e, form.id)}
+                            className="p-1.5 hover:bg-neon-purple/20 rounded-lg text-white/50 hover:text-neon-purple transition-all"
+                            title="Duplicate form"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleFocusForm(form.id) }}
                             className="p-1.5 hover:bg-neon-cyan/20 rounded-lg text-white/50 hover:text-neon-cyan transition-all"
@@ -418,15 +453,21 @@ export function Header() {
           <Plug className="w-4 h-4 text-neon-cyan" />
         </button>
 
-        
-        <button 
-          onClick={openProfileModal}
+  
+        <button
+          onClick={() => {
+            if (session) {
+              openProfileModal()
+            } else {
+              window.location.href = '/auth/signin'
+            }
+          }}
           className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/80 text-sm transition-colors"
-          title="My Profile"
+          title={session ? "My Profile" : "Sign In"}
         >
           <UserCircle className="w-4 h-4" />
-          <span className="hidden md:inline">Profile</span>
-          {mounted && profile && completeness < 100 && (
+          <span className="hidden md:inline">{session ? 'Profile' : 'Sign In'}</span>
+          {mounted && session && profile && completeness < 100 && (
             <span className="w-2 h-2 bg-neon-cyan rounded-full animate-pulse" />
           )}
         </button>
@@ -457,22 +498,48 @@ export function Header() {
                 zIndex: 9999
               }}
             >
-              <div className="px-4 py-2 border-b border-white/10">
-                <p className="text-sm font-medium text-white">Guest User</p>
-                <p className="text-xs text-white/50">Sign in to save forms</p>
-              </div>
-              <button 
-                onClick={() => { openProfileModal(); setShowUserMenu(false) }}
-                className="w-full px-4 py-2 text-left text-sm text-white/80 hover:bg-white/10 flex items-center gap-2"
-              >
-                <UserCircle className="w-4 h-4" /> My Profile
-              </button>
-              <button className="w-full px-4 py-2 text-left text-sm text-white/80 hover:bg-white/10">
-                Sign In
-              </button>
-              <button className="w-full px-4 py-2 text-left text-sm text-white/80 hover:bg-white/10">
-                Create Account
-              </button>
+              {session ? (
+                <>
+                  <div className="px-4 py-2 border-b border-white/10">
+                    <p className="text-sm font-medium text-white">{session.user?.email}</p>
+                    <p className="text-xs text-white/50">Signed in</p>
+                  </div>
+                  <button
+                    onClick={() => { openProfileModal(); setShowUserMenu(false) }}
+                    className="w-full px-4 py-2 text-left text-sm text-white/80 hover:bg-white/10 flex items-center gap-2"
+                  >
+                    <UserCircle className="w-4 h-4" /> My Profile
+                  </button>
+                  <button
+                    onClick={() => {
+                      signOut()
+                      setShowUserMenu(false)
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-white/80 hover:bg-white/10"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="px-4 py-2 border-b border-white/10">
+                    <p className="text-sm font-medium text-white">Guest User</p>
+                    <p className="text-xs text-white/50">Sign in to save forms</p>
+                  </div>
+                  <a
+                    href="/auth/signin"
+                    className="w-full px-4 py-2 text-left text-sm text-white/80 hover:bg-white/10 block"
+                  >
+                    Sign In
+                  </a>
+                  <a
+                    href="/auth/signup"
+                    className="w-full px-4 py-2 text-left text-sm text-white/80 hover:bg-white/10 block"
+                  >
+                    Create Account
+                  </a>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -483,6 +550,15 @@ export function Header() {
       
       {/* Integrations & Analytics Modal */}
       <IntegrationsModal isOpen={showIntegrationsModal} onClose={() => setShowIntegrationsModal(false)} />
+      
+      {/* Share Modal */}
+      {shareFormId && (
+        <ShareModal 
+          form={forms.find(f => f.id === shareFormId)!} 
+          isOpen={showShareModal} 
+          onClose={() => { setShowShareModal(false); setShareFormId(null) }} 
+        />
+      )}
     </header>
   )
 }

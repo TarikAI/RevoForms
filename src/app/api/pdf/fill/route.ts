@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (outputFormat === 'download') {
-      return new NextResponse(result.pdf, {
+      // Convert Uint8Array to Buffer for NextResponse
+      const buffer = Buffer.from(result.pdf)
+      return new NextResponse(buffer, {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': 'attachment; filename="filled-form.pdf"',

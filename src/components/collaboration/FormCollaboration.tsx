@@ -57,7 +57,6 @@ interface Version {
 }
 
 export function FormCollaboration() {
-  const { currentForm } = useFormStore()
   const [activeTab, setActiveTab] = useState<'people' | 'comments' | 'history' | 'versions'>('people')
   const [collaborators, setCollaborators] = useState<User[]>([
     {

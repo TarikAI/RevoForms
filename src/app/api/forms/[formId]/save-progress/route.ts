@@ -53,7 +53,7 @@ export async function POST(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { formId } = params
+    const { formId } = await params
     const body: SaveProgressRequest = await request.json()
     const { formData, currentStep, totalSteps, expiresAt } = body
 
@@ -90,7 +90,7 @@ export async function POST(
     savedProgressStore.set(id, savedProgress)
 
     // Set cookie with progress ID
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     cookieStore.set(`form_progress_${formId}`, id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -131,13 +131,13 @@ export async function GET(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { formId } = params
+    const { formId } = await params
     const { searchParams } = new URL(request.url)
     const progressId = searchParams.get('id')
     const accessCode = searchParams.get('code')
 
     // Try to get from cookie first
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const cookieProgressId = cookieStore.get(`form_progress_${formId}`)?.value
 
     const targetId = progressId || cookieProgressId
@@ -208,11 +208,11 @@ export async function PUT(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { formId } = params
+    const { formId } = await params
     const body: SaveProgressRequest = await request.json()
     const { formData, currentStep, totalSteps } = body
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const progressId = cookieStore.get(`form_progress_${formId}`)?.value
 
     if (!progressId) {
@@ -260,7 +260,7 @@ export async function DELETE(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { formId } = params
+    const { formId } = await params
     const { searchParams } = new URL(request.url)
     const progressId = searchParams.get('id')
 
@@ -281,7 +281,7 @@ export async function DELETE(
     }
 
     // Clear cookie if it exists
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     cookieStore.delete(`form_progress_${formId}`)
 
     return NextResponse.json({

@@ -190,12 +190,18 @@ export class ABTestingEngine {
           background: '#0f0f1a',
           surface: '#1a1a2e',
           text: '#ffffff',
-          textSecondary: '#a1a1aa',
+          textMuted: '#a1a1aa',
           border: '#27273a',
           error: '#ef4444',
           success: '#22c55e',
           accent: '#06b6d4',
         },
+        fontFamily: 'Inter',
+        fontSize: { label: '14px', input: '14px', button: '14px', heading: '18px' },
+        spacing: { fieldGap: '16px', padding: '20px' },
+        borderRadius: { input: '8px', button: '8px', form: '12px' },
+        shadows: true,
+        animation: true,
       }
     }
 
@@ -313,7 +319,7 @@ export class ABTestingEngine {
 
       // Determine winner if confidence > 95%
       if (test.confidence > 95) {
-        test.winner = variant.completionRate > control.completionRate ? variant.id : control.id
+        test.winner = variant.completionRate > control.completionRate ? variant.variantId : control.variantId
         test.status = 'completed'
       }
     }

@@ -2,9 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, FolderPlus, Check, Search } from 'lucide-react'
+import { X, FolderPlus, Check, Search, Briefcase, ShoppingBag, GraduationCap, Heart, Code, Megaphone } from 'lucide-react'
 import { useProjectStore } from '@/store/projectStore'
 import { useFormStore } from '@/store/formStore'
+
+// Icon mapping from string to component
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+  Briefcase,
+  ShoppingBag,
+  GraduationCap,
+  Heart,
+  Code,
+  Megaphone,
+}
 
 interface FormProjectModalProps {
   isOpen: boolean
@@ -178,7 +188,14 @@ export function FormProjectModal({ isOpen, onClose, formId }: FormProjectModalPr
                       className="w-10 h-10 rounded-lg flex items-center justify-center"
                       style={{ backgroundColor: `${project.color}20` }}
                     >
-                      {project.icon ? <project.icon /> : <FolderPlus />}
+                      {project.icon ? (
+                      (() => {
+                        const IconComponent = ICON_MAP[project.icon]
+                        return IconComponent ? <IconComponent /> : <FolderPlus />
+                      })()
+                    ) : (
+                      <FolderPlus />
+                    )}
                     </div>
                     <div className="flex-1">
                       <p className={`font-medium ${

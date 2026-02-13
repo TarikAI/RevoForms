@@ -12,6 +12,7 @@ const EmailConfigSchema = z.object({
 })
 
 const SendEmailSchema = z.object({
+  configId: z.string().optional(),
   to: z.union([z.string().email(), z.array(z.string().email())]),
   subject: z.string().min(1, 'Subject is required'),
   html: z.string().min(1, 'HTML content is required'),
@@ -26,8 +27,10 @@ const SendEmailSchema = z.object({
 // Mock email configurations storage - replace with database
 const emailConfigs: Map<string, any> = new Map()
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Helper to get Resend client lazily
+function getResendClient() {
+  return process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -238,7 +241,11 @@ async function verifyEmailDomain(data: any) {
 
 // Provider-specific implementations
 async function sendWithResend(config: any, emailData: any) {
-  const { data, error } = await resend.emails.send({
+  const client = getResendClient()
+  if (!client) {
+    throw new Error('Resend API key is not configured')
+  }
+  const response = await client.emails.send({
     from: `${config.fromName} <${config.fromEmail}>`,
     to: Array.isArray(emailData.to) ? emailData.to : [emailData.to],
     subject: emailData.subject,
@@ -247,11 +254,11 @@ async function sendWithResend(config: any, emailData: any) {
     replyTo: emailData.replyTo || config.replyTo,
   })
 
-  if (error) {
-    throw new Error(`Resend error: ${error.message}`)
+  if (!response || response.error) {
+    throw new Error(`Resend error: ${response?.error?.message || 'Unknown error'}`)
   }
 
-  return { messageId: data.id }
+  return { messageId: response.data?.id || 'unknown' }
 }
 
 async function sendWithSendGrid(config: any, emailData: any) {
@@ -307,10 +314,16 @@ async function testProviderConnection(config: any) {
   try {
     switch (config.provider) {
       case 'resend':
-        const { data: domains } = await resend.domains.list()
+        const resendClient = getResendClient()
+        if (!resendClient) {
+          throw new Error('Resend API key is not configured')
+        }
+        const domainsResponse = await resendClient.domains.list()
+        const rawData = domainsResponse?.data
+        const domainList: any[] = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : [])
         return {
           connected: true,
-          domains: domains.map((d: any) => ({ name: d.name, verified: d.verified })),
+          domains: domainList.map((d: any) => ({ name: d?.name, verified: d?.verified })),
         }
       default:
         return { connected: true, message: 'Connection test successful' }
@@ -365,8 +378,16 @@ async function sendTestEmail(config: any, testEmail: string) {
 
 async function verifyResendDomain(domain: string, apiKey: string) {
   try {
-    const { data } = await resend.domains.list()
-    const domainData = data.find((d: any) => d.name === domain)
+    const client = getResendClient()
+    if (!client) {
+      throw new Error('Resend API key is not configured')
+    }
+    const response = await client.domains.list()
+    // Extract domains array from response (handle both direct array and nested data structure)
+    const responseData = response?.data || []
+    const domainsData = (responseData as any)?.data || responseData || []
+    const domains = Array.isArray(domainsData) ? domainsData : []
+    const domainData = domains.find((d: any) => d.name === domain)
 
     if (!domainData) {
       return { verified: false, message: 'Domain not found in Resend' }

@@ -6,7 +6,7 @@ import {
   Shield, Eye, EyeOff, Lock, Key, AlertTriangle, CheckCircle, X,
   RefreshCw, Users, Clock, Activity, ShieldCheck, Ban, Fingerprint,
   Smartphone, Mail, Globe, Cpu, HardDrive, Database, KeyRound,
-  BadgeCheck, Security, FileCheck, UserCheck, Bell, Settings
+  BadgeCheck, FileCheck, UserCheck, Bell, Settings
 } from 'lucide-react'
 import { useFormStore } from '@/store/formStore'
 
@@ -79,7 +79,8 @@ interface ThreatDetection {
 }
 
 export function AdvancedSecurity() {
-  const { currentForm } = useFormStore()
+  const { forms, selectedFormId } = useFormStore()
+  const currentForm = forms.find(f => f.id === selectedFormId) || null
   const [activeTab, setActiveTab] = useState<'overview' | 'settings' | 'monitoring' | 'compliance'>('overview')
   const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
     passwordProtection: {

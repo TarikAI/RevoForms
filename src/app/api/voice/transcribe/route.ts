@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-// Configure OpenAI for voice transcription
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Helper to get OpenAI client lazily
+function getOpenAIClient() {
+  return process.env.OPENAI_API_KEY
+    ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+    : null
+}
 
 // Alternative providers
 const PROVIDERS = {
@@ -98,6 +100,11 @@ export async function POST(request: NextRequest) {
 async function transcribeWithOpenAI(audioFile: File): Promise<string> {
   if (!PROVIDERS.openai.apiKey) {
     throw new Error('OpenAI API key not configured')
+  }
+
+  const openai = getOpenAIClient()
+  if (!openai) {
+    throw new Error('OpenAI client not available')
   }
 
   try {

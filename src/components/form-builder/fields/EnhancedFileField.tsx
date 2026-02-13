@@ -69,8 +69,8 @@ export function EnhancedFileField({ field, value = [], onChange, error, disabled
 
     // Check file type
     if (accept !== '*/*' && accept !== '*') {
-      const acceptedTypes = accept.split(',').map(t => t.trim())
-      const isAccepted = acceptedTypes.some(type => {
+      const acceptedTypes = accept.split(',').map((t: string) => t.trim())
+      const isAccepted = acceptedTypes.some((type: string) => {
         if (type.startsWith('.')) {
           return file.name.toLowerCase().endsWith(type.toLowerCase())
         }
@@ -118,7 +118,8 @@ export function EnhancedFileField({ field, value = [], onChange, error, disabled
           canvas.toBlob(
             (blob) => {
               if (blob) {
-                const resizedFile = new File([blob], file.name, {
+                const FileConstructor = (window as any).File || File
+                const resizedFile = new FileConstructor([blob], file.name, {
                   type: file.type,
                   lastModified: Date.now()
                 })

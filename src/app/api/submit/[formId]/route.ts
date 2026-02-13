@@ -2,91 +2,129 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { headers } from 'next/headers'
 
-// Database schema placeholder - replace with actual DB implementation
-interface FormSubmission {
-  id: string
-  formId: string
-  data: Record<string, any>
-  submittedAt: Date
-  userAgent?: string
-  ip?: string
-  referrer?: string
-  userId?: string
-}
-
-// Mock database - replace with real database (Drizzle ORM)
-const submissions: FormSubmission[] = []
-
-// Form submission validation schema
-const CreateSubmissionSchema = z.object({
+// Submission validation schema
+const SubmissionSchema = z.object({
   data: z.record(z.any()),
-  userId: z.string().optional(),
   metadata: z.object({
+    completionTime: z.number().optional(),
     userAgent: z.string().optional(),
     referrer: z.string().optional(),
   }).optional(),
+  isPartial: z.boolean().optional(),
+  resumeToken: z.string().optional(),
 })
 
-// Success response schema
-const SuccessResponseSchema = z.object({
-  success: z.literal(true),
-  submissionId: z.string(),
-  message: z.string(),
-  redirectUrl: z.string().optional(),
-})
+interface SubmissionMetadata {
+  submittedAt: string
+  userAgent?: string
+  referrer?: string
+  completionTime?: number
+  isPartial?: boolean
+  ip?: string
+  resumeToken?: string
+}
+
+// In-memory storage for server (will be replaced by database)
+// This persists for the lifetime of the server process
+const serverResponseStore = new Map<string, any[]>()
+const serverAnalytics = new Map<string, { views: number; starts: number; completions: number }>()
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { id } = await params
-    const headersList = headers()
+    const { formId } = await params
+    const headersList = await headers()
 
     // Get client information
     const userAgent = headersList.get('user-agent') || undefined
-    const ip = headersList.get('x-forwarded-for') ||
-              headersList.get('x-real-ip') ||
-              request.ip ||
-              undefined
+    const forwarded = headersList.get('x-forwarded-for')
+    const ip = forwarded
+      ? forwarded.split(',')[0].trim()
+      : headersList.get('x-real-ip') || 'unknown'
     const referrer = headersList.get('referer') || undefined
 
     // Parse and validate request body
     const body = await request.json()
-    const validatedData = CreateSubmissionSchema.parse(body)
+    const validatedData = SubmissionSchema.parse(body)
 
-    // Here you would typically:
-    // 1. Validate the form exists and is active
-    // 2. Check form submission limits
-    // 3. Validate individual fields
-    // 4. Apply form logic/rules
+    // Generate submission ID
+    const submissionId = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
     // Create submission record
-    const submission: FormSubmission = {
-      id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    const submission = {
+      id: submissionId,
       formId,
       data: validatedData.data,
-      submittedAt: new Date(),
-      userAgent: validatedData.metadata?.userAgent || userAgent,
-      ip: ip,
-      referrer: validatedData.metadata?.referrer || referrer,
-      userId: validatedData.userId,
+      metadata: {
+        submittedAt: new Date().toISOString(),
+        userAgent: validatedData.metadata?.userAgent || userAgent,
+        referrer: validatedData.metadata?.referrer || referrer,
+        completionTime: validatedData.metadata?.completionTime,
+        isPartial: validatedData.isPartial || false,
+        ip,
+      } as SubmissionMetadata,
+      status: validatedData.isPartial ? 'partial' : 'complete',
     }
 
-    // Save to database (mock for now)
-    submissions.push(submission)
+    // Store in server memory
+    const existingResponses = serverResponseStore.get(formId) || []
+    
+    // Handle resume token for partial submissions
+    if (validatedData.resumeToken) {
+      const partialIndex = existingResponses.findIndex(
+        (r: any) => r.metadata.resumeToken === validatedData.resumeToken && r.status === 'partial'
+      )
+      if (partialIndex >= 0) {
+        existingResponses[partialIndex] = {
+          ...existingResponses[partialIndex],
+          data: { ...existingResponses[partialIndex].data, ...validatedData.data },
+          status: validatedData.isPartial ? 'partial' : 'complete',
+          metadata: {
+            ...existingResponses[partialIndex].metadata,
+            submittedAt: new Date().toISOString(),
+          }
+        }
+        serverResponseStore.set(formId, existingResponses)
+        
+        return NextResponse.json({
+          success: true,
+          submissionId: existingResponses[partialIndex].id,
+          message: validatedData.isPartial ? 'Progress saved' : 'Form submitted successfully'
+        })
+      }
+    }
 
-    // Process integrations asynchronously
+    // Add resume token for partial submissions
+    if (validatedData.isPartial) {
+      ;(submission.metadata as SubmissionMetadata).resumeToken = `resume_${Math.random().toString(36).substr(2, 16)}`
+    }
+
+    existingResponses.push(submission)
+    serverResponseStore.set(formId, existingResponses)
+
+    // Update analytics
+    const analytics = serverAnalytics.get(formId) || { views: 0, starts: 0, completions: 0 }
+    if (validatedData.isPartial) {
+      analytics.starts++
+    } else {
+      analytics.completions++
+    }
+    serverAnalytics.set(formId, analytics)
+
+    // Process integrations asynchronously (webhooks, email, Google Sheets)
     processIntegrations(formId, submission).catch(console.error)
 
     // Return success response
-    const response: z.infer<typeof SuccessResponseSchema> = {
+    return NextResponse.json({
       success: true,
-      submissionId: submission.id,
-      message: 'Form submitted successfully',
-    }
-
-    return NextResponse.json(response)
+      submissionId,
+      resumeToken: submission.metadata.resumeToken,
+      message: validatedData.isPartial 
+        ? 'Progress saved. Use resume token to continue later.' 
+        : 'Form submitted successfully',
+    })
 
   } catch (error) {
     console.error('Form submission error:', error)
@@ -119,58 +157,58 @@ export async function GET(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { formId } = await params
     const { searchParams } = new URL(request.url)
 
     // Pagination
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = (page - 1) * limit
+    const includePartial = searchParams.get('includePartial') === 'true'
 
-    // Filtering
-    const startDate = searchParams.get('startDate')
-    const endDate = searchParams.get('endDate')
-    const userId = searchParams.get('userId')
-
-    // Get submissions for the form
-    let formSubmissions = submissions.filter(s => s.formId === formId)
-
-    // Apply filters
-    if (startDate) {
-      formSubmissions = formSubmissions.filter(s =>
-        new Date(s.submittedAt) >= new Date(startDate)
-      )
-    }
-
-    if (endDate) {
-      formSubmissions = formSubmissions.filter(s =>
-        new Date(s.submittedAt) <= new Date(endDate)
-      )
-    }
-
-    if (userId) {
-      formSubmissions = formSubmissions.filter(s => s.userId === userId)
+    // Get submissions
+    let responses = serverResponseStore.get(formId) || []
+    
+    if (!includePartial) {
+      responses = responses.filter((r: any) => r.status === 'complete')
     }
 
     // Sort by submission date (newest first)
-    formSubmissions.sort((a, b) =>
-      new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    responses.sort((a: any, b: any) =>
+      new Date(b.metadata.submittedAt).getTime() - new Date(a.metadata.submittedAt).getTime()
     )
 
-    // Apply pagination
-    const paginatedSubmissions = formSubmissions.slice(offset, offset + limit)
+    // Get analytics
+    const analytics = serverAnalytics.get(formId) || { views: 0, starts: 0, completions: 0 }
 
-    // Return sanitized submissions (without sensitive data)
-    const sanitizedSubmissions = paginatedSubmissions.map(({ ip, userAgent, ...submission }) => submission)
+    // Apply pagination
+    const paginatedResponses = responses.slice(offset, offset + limit)
+
+    // Sanitize responses (remove sensitive data)
+    const sanitizedResponses = paginatedResponses.map(({ metadata, ...rest }: any) => ({
+      ...rest,
+      metadata: {
+        submittedAt: metadata.submittedAt,
+        completionTime: metadata.completionTime,
+        isPartial: metadata.isPartial,
+      }
+    }))
 
     return NextResponse.json({
       success: true,
-      submissions: sanitizedSubmissions,
+      responses: sanitizedResponses,
+      analytics: {
+        ...analytics,
+        totalResponses: responses.length,
+        conversionRate: analytics.starts > 0 
+          ? Math.round((analytics.completions / analytics.starts) * 100) 
+          : 0
+      },
       pagination: {
         page,
         limit,
-        total: formSubmissions.length,
-        totalPages: Math.ceil(formSubmissions.length / limit),
+        total: responses.length,
+        totalPages: Math.ceil(responses.length / limit),
       },
     })
 
@@ -186,43 +224,32 @@ export async function GET(
   }
 }
 
-// Process integrations (webhooks, emails, etc.)
-async function processIntegrations(formId: string, submission: FormSubmission) {
+// Process integrations asynchronously
+async function processIntegrations(formId: string, submission: any) {
   try {
-    // Get form configuration from database (mock implementation)
+    // Get form configuration (in production, fetch from database)
     const formConfig = await getFormConfig(formId)
 
-    // Process webhooks
+    // 1. Send webhook if configured
     if (formConfig.webhooks?.enabled && formConfig.webhooks?.url) {
-      await triggerWebhook(formConfig.webhooks.url, {
+      await sendWebhook(formConfig.webhooks.url, {
         event: 'form_submission',
         formId,
         submissionId: submission.id,
         data: submission.data,
-        submittedAt: submission.submittedAt.toISOString(),
+        submittedAt: submission.metadata.submittedAt,
       })
     }
 
-    // Send email notifications
-    if (formConfig.emailNotifications?.enabled) {
-      await sendEmailNotification(formConfig.emailNotifications, {
-        formId,
-        submission,
-        formName: formConfig.name,
-      })
+    // 2. Send email notification if configured
+    if (formConfig.emailNotifications?.enabled && formConfig.emailNotifications?.recipients?.length > 0) {
+      await sendEmailNotification(formConfig, submission)
     }
 
-    // Save to Google Sheets
-    if (formConfig.googleSheets?.enabled) {
+    // 3. Save to Google Sheets if configured
+    if (formConfig.googleSheets?.enabled && formConfig.googleSheets?.spreadsheetId) {
       await saveToGoogleSheets(formConfig.googleSheets, submission)
     }
-
-    // Update analytics
-    await updateAnalytics(formId, {
-      type: 'submission',
-      timestamp: submission.submittedAt,
-      userId: submission.userId,
-    })
 
   } catch (error) {
     console.error('Error processing integrations:', error)
@@ -230,52 +257,117 @@ async function processIntegrations(formId: string, submission: FormSubmission) {
   }
 }
 
-// Mock functions - replace with actual implementations
 async function getFormConfig(formId: string) {
-  // This would fetch the form configuration from your database
+  // TODO: Fetch from database when Supabase is connected
+  // For now, return default configuration
   return {
     id: formId,
-    name: 'Sample Form',
+    name: 'Form',
     webhooks: {
-      enabled: true,
-      url: `https://api.revoforms.com/webhook/${formId}`,
+      enabled: false,
+      url: null,
     },
     emailNotifications: {
-      enabled: true,
-      recipients: ['admin@example.com'],
-      subject: `New form submission: ${formId}`,
+      enabled: false,
+      recipients: [],
     },
     googleSheets: {
       enabled: false,
-      spreadsheetId: '',
-      sheetName: '',
+      spreadsheetId: null,
+      sheetName: null,
     },
   }
 }
 
-async function triggerWebhook(url: string, data: any) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'RevoForms-Webhook/1.0',
-    },
-    body: JSON.stringify(data),
-  })
+async function sendWebhook(url: string, data: any) {
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'RevoForms-Webhook/1.0',
+      },
+      body: JSON.stringify(data),
+    })
 
-  if (!response.ok) {
-    throw new Error(`Webhook delivery failed: ${response.status}`)
+    if (!response.ok) {
+      console.error(`Webhook failed: ${response.status}`)
+    }
+  } catch (error) {
+    console.error('Webhook error:', error)
   }
 }
 
-async function sendEmailNotification(config: any, data: any) {
-  // Integrate with your email service (Resend, SendGrid, etc.)
+async function sendEmailNotification(formConfig: any, submission: any) {
+  try {
+    // Format the submission data as HTML
+    const dataRows = Object.entries(submission.data)
+      .map(([key, value]) => `<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">${key}</td><td style="padding:8px;border:1px solid #ddd;">${value}</td></tr>`)
+      .join('')
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <div style="background:linear-gradient(135deg,#06b6d4,#a855f7);padding:20px;border-radius:10px;text-align:center;">
+          <h1 style="color:white;margin:0;">New Form Submission</h1>
+          <p style="color:rgba(255,255,255,0.9);margin:10px 0 0;">${formConfig.name}</p>
+        </div>
+        <div style="padding:20px;background:#f9f9f9;border-radius:10px;margin-top:20px;">
+          <table style="width:100%;border-collapse:collapse;">
+            ${dataRows}
+          </table>
+          <p style="color:#666;font-size:12px;margin-top:20px;">
+            Submitted at: ${new Date(submission.metadata.submittedAt).toLocaleString()}<br>
+            Submission ID: ${submission.id}
+          </p>
+        </div>
+        <p style="text-align:center;color:#999;font-size:12px;margin-top:20px;">
+          Powered by <a href="https://revoforms.dev" style="color:#06b6d4;">RevoForms</a>
+        </p>
+      </body>
+      </html>
+    `
+
+    // Use the email API
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/integrations/email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'send',
+        to: formConfig.emailNotifications.recipients,
+        subject: `New submission: ${formConfig.name}`,
+        html,
+      }),
+    })
+
+    if (!response.ok) {
+      console.error('Email notification failed')
+    }
+  } catch (error) {
+    console.error('Email notification error:', error)
+  }
 }
 
-async function saveToGoogleSheets(config: any, submission: FormSubmission) {
-  // Integrate with Google Sheets API
-}
+async function saveToGoogleSheets(sheetsConfig: any, submission: any) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/integrations/google-sheets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'save',
+        configId: sheetsConfig.configId,
+        formId: submission.formId,
+        submissionId: submission.id,
+        formData: submission.data,
+      }),
+    })
 
-async function updateAnalytics(formId: string, event: any) {
-  // Update form analytics
+    if (!response.ok) {
+      console.error('Google Sheets save failed')
+    }
+  } catch (error) {
+    console.error('Google Sheets error:', error)
+  }
 }

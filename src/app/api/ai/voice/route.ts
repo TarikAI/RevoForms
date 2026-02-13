@@ -6,12 +6,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-// Configure OpenAI for transcription
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-
 export async function POST(request: NextRequest) {
+  // Configure OpenAI for transcription (lazy initialization)
+  const openai = process.env.OPENAI_API_KEY
+    ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+    : null
   try {
     const formData = await request.formData()
     const audioFile = formData.get('audio') as File
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest) {
     let transcription: string
 
     // Use OpenAI Whisper for transcription
-    if (provider === 'openai' && process.env.OPENAI_API_KEY) {
+    if (provider === 'openai' && openai) {
       const transcriptionResponse = await openai.audio.transcriptions.create({
         file: audioFile,
         model: 'whisper-1',

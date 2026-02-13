@@ -281,7 +281,7 @@ export async function POST(request: NextRequest) {
             text: String(value),
             position,
             style: {
-              mode: fontFamily ? 'font' : 'handwriting',
+              mode: fontFamily ? 'font' : 'handwriting' as 'font' | 'handwriting',
               handwritingStyle: handwritingStyle as any,
               fontFamily,
               color: textColor,

@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Code2, Play, Save, Trash2, Copy, Check, AlertTriangle, Upload,
   Download, FileText, FileCode, Palette, Eye, EyeOff, Settings,
-  Plus, X, ChevronDown, ChevronRight, Zap, Globe, Shield, Database
+  Plus, X, ChevronDown, ChevronRight, Zap, Globe, Shield, Database,
+  Search, Filter, CircleCheck
 } from 'lucide-react'
 import { useFormStore } from '@/store/formStore'
 
@@ -38,7 +39,6 @@ interface SavedSnippet {
 }
 
 export function CustomCodeInjection() {
-  const { currentForm } = useFormStore()
   const [activeTab, setActiveTab] = useState<'editor' | 'library' | 'analytics'>('editor')
   const [codeSnippets, setCodeSnippets] = useState<CodeSnippet[]>([
     {
@@ -783,11 +783,11 @@ document.addEventListener('mouseleave', function(e) {
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Security Scan</h3>
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <CircleCheck className="w-4 h-4 text-green-600" />
                           <span className="text-sm text-slate-600 dark:text-slate-400">No XSS vulnerabilities</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <CircleCheck className="w-4 h-4 text-green-600" />
                           <span className="text-sm text-slate-600 dark:text-slate-400">Secure code injection</span>
                         </div>
                         <div className="flex items-center gap-2">

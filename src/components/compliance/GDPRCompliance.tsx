@@ -57,7 +57,6 @@ interface PrivacySetting {
 }
 
 export function GDPRCompliance() {
-  const { currentForm, forms } = useFormStore()
   const [activeTab, setActiveTab] = useState<'overview' | 'consent' | 'requests' | 'breaches' | 'settings'>('overview')
   const [consentRecords, setConsentRecords] = useState<ConsentRecord[]>([
     {

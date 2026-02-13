@@ -26,7 +26,8 @@ import {
   Eye,
   Edit,
   Trash2,
-  Plus
+  Plus,
+  Timer
 } from 'lucide-react'
 
 interface AIFeature {
@@ -228,7 +229,7 @@ export function AIFeatures({
                   title="Avg. Completion Time"
                   value={aiAnalysis.averageTimeToComplete}
                   type="time"
-                  icon={<Clock />}
+                  icon={<Timer />}
                 />
               </div>
 
@@ -236,7 +237,7 @@ export function AIFeatures({
               <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                 <h4 className="text-sm font-medium text-white mb-4">Drop-off Points</h4>
                 <div className="space-y-3">
-                  {aiAnalysis.dropOffPoints.map((point, idx) => (
+                  {aiAnalysis.dropOffPoints.map((point: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
@@ -258,7 +259,7 @@ export function AIFeatures({
                   AI Recommendations
                 </h4>
                 <ul className="space-y-2">
-                  {aiAnalysis.suggestions.map((suggestion, idx) => (
+                  {aiAnalysis.suggestions.map((suggestion: string, idx: number) => (
                     <li key={idx} className="flex items-start gap-2">
                       <CheckCircle className="w-3 h-3 text-blue-400 mt-0.5 flex-shrink-0" />
                       <span className="text-sm text-blue-200">{suggestion}</span>

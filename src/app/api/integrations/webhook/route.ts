@@ -30,7 +30,10 @@ export async function POST(request: NextRequest) {
         _meta: {
           submittedAt: new Date().toISOString(),
           userAgent: request.headers.get('user-agent'),
-          ip: request.ip || request.headers.get('x-forwarded-for') || 'unknown'
+          ip: (() => {
+            const headersList = request.headers
+            return headersList.get('x-forwarded-for')?.split(',')[0] || headersList.get('x-real-ip') || 'unknown'
+          })()
         }
       }
     }

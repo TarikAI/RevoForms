@@ -8,7 +8,7 @@ import {
   File, Image, Calendar, Link, List, Code, Save, Eye, Download
 } from 'lucide-react'
 import { useProfileStore, getProfileCompleteness } from '@/store/profileStore'
-import type { CustomFieldInfo, DocumentInfo, HandwritingInfo, SavedUploadedForm } from '@/store/profileStore'
+import type { PersonalInfo, AddressInfo, ProfessionalInfo, CustomFieldInfo, DocumentInfo, HandwritingInfo, SavedUploadedForm } from '@/store/profileStore'
 
 const TABS = [
   { id: 'personal', label: 'Personal', icon: User },
@@ -81,9 +81,16 @@ export function ProfileModal() {
   } = useProfileStore()
 
   // Local state for form inputs
-  const [localPersonal, setLocalPersonal] = useState(profile?.personal || {})
-  const [localAddress, setLocalAddress] = useState(profile?.address || {})
-  const [localProfessional, setLocalProfessional] = useState(profile?.professional || {})
+  const [localPersonal, setLocalPersonal] = useState<PersonalInfo>(profile?.personal || {
+    firstName: '', lastName: '', email: '', phone: '', dateOfBirth: '', nationality: '', gender: ''
+  })
+  const [localAddress, setLocalAddress] = useState<AddressInfo>(profile?.address || {
+    street: '', apartment: '', city: '', state: '', postalCode: '', country: ''
+  })
+  const [localProfessional, setLocalProfessional] = useState<ProfessionalInfo>(profile?.professional || {
+    jobTitle: '', company: '', industry: '', department: '', yearsExperience: '',
+    linkedIn: '', website: '', portfolio: ''
+  })
   
   // Document upload state
   const [docDisplayName, setDocDisplayName] = useState('')

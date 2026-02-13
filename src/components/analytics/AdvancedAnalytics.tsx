@@ -21,15 +21,15 @@ import {
   Grid3X3,
   Activity,
   MapPin,
-  Device,
-  Browser,
+  Monitor,
+  Globe,
   ArrowUpRight,
   ArrowDownRight,
   Minus,
   AlertCircle,
   Info,
   ChevronDown,
-  CheckCircle
+  CircleCheck
 } from 'lucide-react'
 
 interface AnalyticsData {
@@ -192,7 +192,7 @@ export function AdvancedAnalytics({ formId, formName, dateRange, onDateRangeChan
   const tabs = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'funnel', label: 'Conversion Funnel', icon: Target },
-    { id: 'devices', label: 'Devices & Browsers', icon: Device },
+    { id: 'devices', label: 'Monitors & Browsers', icon: Monitor },
     { id: 'locations', label: 'Locations', icon: MapPin },
     { id: 'performance', label: 'Performance', icon: Activity }
   ]
@@ -359,18 +359,18 @@ export function AdvancedAnalytics({ formId, formName, dateRange, onDateRangeChan
               </div>
             </div>
 
-            {/* Device and Location Breakdown */}
+            {/* Monitor and Location Breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="p-6 bg-white/5 border border-white/10 rounded-lg">
-                <h4 className="text-lg font-medium text-white mb-4">Device Breakdown</h4>
+                <h4 className="text-lg font-medium text-white mb-4">Monitor Breakdown</h4>
                 <div className="space-y-3">
                   {Object.entries(MOCK_DATA.devices).map(([device, count]) => {
                     const percentage = (count / Object.values(MOCK_DATA.devices).reduce((a, b) => a + b, 0)) * 100
                     const icons = {
-                      desktop: Device,
-                      mobile: Device,
-                      tablet: Device,
-                      other: Device
+                      desktop: Monitor,
+                      mobile: Monitor,
+                      tablet: Monitor,
+                      other: Monitor
                     }
                     const Icon = icons[device as keyof typeof icons]
 
@@ -482,9 +482,9 @@ export function AdvancedAnalytics({ formId, formName, dateRange, onDateRangeChan
             exit={{ opacity: 0, y: -20 }}
             className="p-6 bg-white/5 border border-white/10 rounded-lg"
           >
-            <h4 className="text-lg font-medium text-white mb-4">Device & Browser Analytics</h4>
+            <h4 className="text-lg font-medium text-white mb-4">Monitor & Browser Analytics</h4>
             <div className="text-center py-12">
-              <Device className="w-16 h-16 text-white/20 mx-auto mb-4" />
+              <Monitor className="w-16 h-16 text-white/20 mx-auto mb-4" />
               <p className="text-white/60">Detailed device and browser analytics</p>
             </div>
           </motion.div>

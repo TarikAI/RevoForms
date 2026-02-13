@@ -68,7 +68,8 @@ interface NotificationLog {
 }
 
 export function ConditionalNotifications() {
-  const { currentForm } = useFormStore()
+  const { forms, selectedFormId } = useFormStore()
+  const currentForm = forms.find(f => f.id === selectedFormId) || null
   const [activeTab, setActiveTab] = useState<'rules' | 'templates' | 'logs' | 'settings'>('rules')
   const [notificationRules, setNotificationRules] = useState<NotificationRule[]>([
     {
@@ -606,7 +607,10 @@ export function ConditionalNotifications() {
                               </td>
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-2">
-                                  <getTypeIcon type={log.type} className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                                  {(() => {
+                const TypeIcon = getTypeIcon(log.type)
+                return <TypeIcon className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+              })()}
                                   <span className="capitalize text-slate-700 dark:text-slate-300">{log.type}</span>
                                 </div>
                               </td>

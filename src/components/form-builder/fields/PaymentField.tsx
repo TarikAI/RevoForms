@@ -17,7 +17,7 @@ interface PaymentFieldProps {
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-export function PaymentField({ field, onChange, error, disabled }: PaymentFieldProps) {
+export function PaymentField({ field, onChange, error: externalError, disabled }: PaymentFieldProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle')
@@ -210,14 +210,14 @@ export function PaymentField({ field, onChange, error, disabled }: PaymentFieldP
       )}
 
       {/* Error Display */}
-      {(error || this.error) && (
+      {(error || externalError) && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
         >
           <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-          <span className="text-sm text-red-400">{error || this.error}</span>
+          <span className="text-sm text-red-400">{error || externalError}</span>
         </motion.div>
       )}
 

@@ -142,7 +142,7 @@ const defaultProfile: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> = {
 interface ProfileState {
   profile: UserProfile | null
   isProfileModalOpen: boolean
-  activeProfileTab: 'personal' | 'address' | 'professional' | 'education' | 'documents' | 'handwriting' | 'custom'
+  activeProfileTab: 'personal' | 'address' | 'professional' | 'education' | 'documents' | 'handwriting' | 'custom' | 'saved-forms'
   
   // Actions
   initProfile: () => void

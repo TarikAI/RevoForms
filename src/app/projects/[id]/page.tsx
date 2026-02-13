@@ -3,11 +3,21 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Plus, Settings, Edit, Trash2, FileText, BarChart3, Users, Lock, Globe, Calendar, Tag } from 'lucide-react'
+import { ArrowLeft, Plus, Settings, Edit, Trash2, FileText, BarChart3, Users, Lock, Globe, Calendar, Tag, Briefcase, ShoppingBag, GraduationCap, Heart, Code, Megaphone } from 'lucide-react'
 import { Header } from '@/components/ui/Header'
 import { ProfileModal } from '@/components/profile'
 import { useProjectStore, useSelectedProject } from '@/store/projectStore'
 import { useFormStore } from '@/store/formStore'
+
+// Icon mapping from string to component
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+  Briefcase,
+  ShoppingBag,
+  GraduationCap,
+  Heart,
+  Code,
+  Megaphone,
+}
 
 export default function ProjectPage() {
   const params = useParams()
@@ -101,7 +111,14 @@ export default function ProjectPage() {
                 className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl"
                 style={{ backgroundColor: `${project.color}20`, color: project.color }}
               >
-                {project.icon ? <project.icon /> : <FileText />}
+                {project.icon ? (
+                  (() => {
+                    const IconComponent = ICON_MAP[project.icon]
+                    return IconComponent ? <IconComponent /> : <FileText />
+                  })()
+                ) : (
+                  <FileText />
+                )}
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-white mb-2">{project.name}</h1>

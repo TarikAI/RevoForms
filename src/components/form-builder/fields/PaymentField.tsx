@@ -14,8 +14,10 @@ interface PaymentFieldProps {
   disabled?: boolean
 }
 
-// Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+// Initialize Stripe (lazy loading)
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : Promise.resolve(null)
 
 export function PaymentField({ field, onChange, error: externalError, disabled }: PaymentFieldProps) {
   const [loading, setLoading] = useState(false)

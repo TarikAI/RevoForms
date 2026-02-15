@@ -49,7 +49,6 @@ function FormPreviewWrapper() {
 export default function Home() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true)
   const [showMultiUpload, setShowMultiUpload] = useState(false)
-  const [showMultiUpload, setShowMultiUpload] = useState(false)
 
   const propertiesPanelOpen = useFormStore((state) => state.propertiesPanelOpen)
   const togglePropertiesPanel = useFormStore((state) => state.togglePropertiesPanel)

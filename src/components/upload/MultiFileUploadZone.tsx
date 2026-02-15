@@ -479,3 +479,6 @@ export function UploadZone({
     </div>
   )
 }
+
+// Export as MultiFileUploadZone for imports
+export { UploadZone as MultiFileUploadZone }
